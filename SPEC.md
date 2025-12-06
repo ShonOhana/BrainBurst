@@ -605,7 +605,7 @@ Note: No chat or comments, just ranking.
 7. Detailed Tasks & Phases (Cursor Friendly)
 
 Below, each task is as small and explicit as possible.
-Use @task tags to assign to Cursor / Claude Sonnet 4.5.
+Use @task tags to assign to Cursor.
 
 PHASE 1 – Project & KMP Setup
 // @task P1-T1: Create Compose Multiplatform project
