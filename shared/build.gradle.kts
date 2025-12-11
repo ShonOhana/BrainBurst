@@ -47,9 +47,10 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             
-            // Firebase (GitLive KMP)
-            implementation(libs.firebase.auth)
-            implementation(libs.firebase.firestore)
+            // Firebase (GitLive KMP) - Temporarily disabled for Phase 1
+            // TODO: Re-enable in Phase 2
+            // implementation(libs.firebase.auth)
+            // implementation(libs.firebase.firestore)
         }
         
         androidMain.dependencies {

@@ -46,6 +46,8 @@
 	</array>
 	<key>CFBundleDisplayName</key>
 	<string>BrainBurst</string>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 </dict>
 </plist>
 
