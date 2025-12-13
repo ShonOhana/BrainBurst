@@ -7,13 +7,14 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    kotlin("native.cocoapods")
 }
 
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
     
@@ -23,6 +24,25 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
+    
+    cocoapods {
+        summary = "Shared module for BrainBurst"
+        homepage = "https://github.com/brainburst"
+        version = "1.0"
+        ios.deploymentTarget = "14.0"
+        
+        pod("FirebaseAuth") {
+            version = "11.5.0"
+        }
+        pod("FirebaseFirestore") {
+            version = "11.5.0"
+        }
+        
+        framework {
             baseName = "Shared"
             isStatic = true
         }
@@ -47,10 +67,9 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             
-            // Firebase (GitLive KMP) - Temporarily disabled for Phase 1
-            // TODO: Re-enable in Phase 2
-            // implementation(libs.firebase.auth)
-            // implementation(libs.firebase.firestore)
+            // Firebase (GitLive KMP)
+            implementation(libs.firebase.auth)
+            implementation(libs.firebase.firestore)
         }
         
         androidMain.dependencies {
@@ -74,8 +93,8 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 

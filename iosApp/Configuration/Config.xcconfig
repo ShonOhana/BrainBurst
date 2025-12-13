@@ -1,3 +1,6 @@
-FRAMEWORK_SEARCH_PATHS = $(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework $(SRCROOT)/../shared/build/bin/iosArm64/debugFramework $(SRCROOT)/../shared/build/bin/iosX64/debugFramework
+#include? "Pods/Target Support Files/Pods-iosApp/Pods-iosApp.debug.xcconfig"
+#include? "Pods/Target Support Files/Pods-iosApp/Pods-iosApp.release.xcconfig"
+
+FRAMEWORK_SEARCH_PATHS = $(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework $(SRCROOT)/../shared/build/bin/iosArm64/debugFramework $(SRCROOT)/../shared/build/bin/iosX64/debugFramework $(inherited)
 OTHER_LDFLAGS = $(inherited) -framework Shared
 

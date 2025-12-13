@@ -1,34 +1,53 @@
 package com.brainburst
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.brainburst.di.appModule
+import com.brainburst.presentation.auth.AuthScreen
+import com.brainburst.presentation.auth.AuthViewModel
+import com.brainburst.presentation.home.HomeScreen
+import com.brainburst.presentation.navigation.Navigator
+import com.brainburst.presentation.navigation.Screen
+import com.brainburst.presentation.splash.SplashScreen
+import com.brainburst.presentation.splash.SplashViewModel
 import com.brainburst.ui.theme.BrainBurstTheme
+import org.koin.compose.KoinApplication
+import org.koin.compose.koinInject
 
 @Composable
 fun App() {
-    BrainBurstTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Hello BrainBurst! 🧠",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+    KoinApplication(application = {
+        modules(appModule)
+    }) {
+        BrainBurstTheme {
+            AppContent()
+        }
+    }
+}
+
+@Composable
+private fun AppContent() {
+    val navigator: Navigator = koinInject()
+    val currentScreen by navigator.currentScreen.collectAsState()
+    
+    when (currentScreen) {
+        is Screen.Splash -> {
+            val viewModel: SplashViewModel = koinInject()
+            SplashScreen(viewModel)
+        }
+        is Screen.Auth -> {
+            val viewModel: AuthViewModel = koinInject()
+            AuthScreen(viewModel)
+        }
+        is Screen.Home -> {
+            HomeScreen()
+        }
+        is Screen.Sudoku -> {
+            // TODO: Implement Sudoku screen
+        }
+        is Screen.Leaderboard -> {
+            // TODO: Implement Leaderboard screen
         }
     }
 }
