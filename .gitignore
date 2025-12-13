@@ -15,6 +15,10 @@ captures/
 .cxx/
 *.so
 
+# Kotlin Multiplatform
+shared/build/
+androidApp/build/
+
 # IntelliJ / Android Studio
 .idea/
 *.iml
@@ -24,8 +28,6 @@ captures/
 out/
 
 # Xcode
-*.xcodeproj/
-*.xcworkspace/
 xcuserdata/
 *.xcuserstate
 *.mode1v3
@@ -36,6 +38,11 @@ DerivedData/
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# CocoaPods
+Pods/
+*.xcworkspace/xcuserdata/
+iosApp/Pods/
 
 # Other
 .kotlin/
