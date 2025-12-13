@@ -1,5 +1,6 @@
 package com.brainburst.presentation.auth
 
+import com.brainburst.domain.auth.GoogleSignInProvider
 import com.brainburst.domain.repository.AuthRepository
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
@@ -19,6 +20,7 @@ data class AuthUiState(
 
 class AuthViewModel(
     private val authRepository: AuthRepository,
+    private val googleSignInProvider: GoogleSignInProvider,
     private val navigator: Navigator,
     private val viewModelScope: CoroutineScope
 ) {
@@ -72,11 +74,35 @@ class AuthViewModel(
     }
     
     fun onGoogleSignInClick() {
-        // This will be handled by platform-specific code
-        // For now, just show a message
-        _uiState.value = _uiState.value.copy(
-            errorMessage = "Google Sign-In coming soon!"
-        )
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        
+        viewModelScope.launch {
+            try {
+                // Get the Google ID token from the platform-specific provider
+                val idToken = googleSignInProvider.signIn()
+                
+                // Use the ID token to sign in with Firebase
+                val result = authRepository.signInWithGoogleToken(idToken)
+                
+                result.fold(
+                    onSuccess = {
+                        _uiState.value = AuthUiState() // Reset state
+                        navigator.navigateTo(Screen.Home)
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = error.message ?: "Google Sign-In failed"
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.message ?: "Google Sign-In failed"
+                )
+            }
+        }
     }
 }
 

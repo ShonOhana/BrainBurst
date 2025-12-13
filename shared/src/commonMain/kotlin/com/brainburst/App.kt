@@ -3,10 +3,11 @@ package com.brainburst
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.brainburst.di.appModule
+import com.brainburst.di.getAllModules
 import com.brainburst.presentation.auth.AuthScreen
 import com.brainburst.presentation.auth.AuthViewModel
 import com.brainburst.presentation.home.HomeScreen
+import com.brainburst.presentation.home.HomeViewModel
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
 import com.brainburst.presentation.splash.SplashScreen
@@ -16,9 +17,9 @@ import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 
 @Composable
-fun App() {
+fun App(koinModules: List<org.koin.core.module.Module> = getAllModules()) {
     KoinApplication(application = {
-        modules(appModule)
+        modules(koinModules)
     }) {
         BrainBurstTheme {
             AppContent()
@@ -41,7 +42,8 @@ private fun AppContent() {
             AuthScreen(viewModel)
         }
         is Screen.Home -> {
-            HomeScreen()
+            val viewModel: HomeViewModel = koinInject()
+            HomeScreen(viewModel)
         }
         is Screen.Sudoku -> {
             // TODO: Implement Sudoku screen

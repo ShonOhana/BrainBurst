@@ -87,11 +87,33 @@ BrainBurst/
 ✅ Firebase Auth and Firestore integrated
 ✅ Koin dependency injection configured
 ✅ iOS app with CocoaPods working on Xcode 26.1
+✅ Authentication UI with Email/Password and Google Sign-In
+✅ Home screen with logout functionality
+✅ User profile display in top bar
+
+## Authentication Features
+
+The app now supports:
+- ✅ Email/Password Sign-In and Sign-Up
+- ✅ Google Sign-In (requires configuration - see below)
+- ✅ Logout functionality with confirmation
+- ✅ User display name/email in home screen
+- ✅ Auto-navigation on sign-in/sign-out
+
+### Setting up Google Sign-In
+
+Google Sign-In requires additional configuration. See [GOOGLE_SIGNIN_SETUP.md](GOOGLE_SIGNIN_SETUP.md) for detailed instructions.
+
+**Quick Setup for Android:**
+1. Enable Google Sign-In in Firebase Console
+2. Get your Web Client ID from Firebase Project Settings
+3. Update the `webClientId` in `GoogleSignInProvider.android.kt`
+4. Download fresh `google-services.json`
 
 ## Next Steps
 
+- Complete Google Sign-In setup (see GOOGLE_SIGNIN_SETUP.md)
 - Build domain models for games
-- Implement authentication flow UI
 - Create home screen with game cards
 - Build Sudoku 6x6 game engine and UI
 

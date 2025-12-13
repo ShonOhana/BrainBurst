@@ -12,7 +12,20 @@
           "package_name": "com.brainburst.android"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "720231725608-158dff4agboe43df032jrl8hd2mbf7ih.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.brainburst.android",
+            "certificate_hash": "6d67bf6647ded3294a61dc461e532d520c8e18fa"
+          }
+        },
+        {
+          "client_id": "720231725608-782cugcmp087vvk3tn77h40spukpk886.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA2Z6GdeCfsmJo3JRLOd1WR3AuVCCpuX_A"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "720231725608-782cugcmp087vvk3tn77h40spukpk886.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "720231725608-sof82uorqem6369qktnm7qm63b383l09.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.brainburst.ios"
+              }
+            }
+          ]
         }
       }
     }

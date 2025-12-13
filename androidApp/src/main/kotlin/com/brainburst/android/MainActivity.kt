@@ -5,13 +5,22 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.brainburst.App
+import com.brainburst.di.getAllModules
+import org.koin.dsl.module
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Create a module that provides this activity instance
+        val activityModule = module {
+            single<ComponentActivity> { this@MainActivity }
+        }
+        
         setContent {
-            App()
+            // Combine platform modules with activity module
+            App(koinModules = getAllModules() + activityModule)
         }
     }
 }

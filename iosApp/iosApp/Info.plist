@@ -48,6 +48,17 @@
 	<string>BrainBurst</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.720231725608-sof82uorqem6369qktnm7qm63b383l09</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
 

@@ -33,7 +33,7 @@ kotlin {
         summary = "Shared module for BrainBurst"
         homepage = "https://github.com/brainburst"
         version = "1.0"
-        ios.deploymentTarget = "14.0"
+        ios.deploymentTarget = "15.0"
         
         pod("FirebaseAuth") {
             version = "11.5.0"
@@ -41,6 +41,10 @@ kotlin {
         pod("FirebaseFirestore") {
             version = "11.5.0"
         }
+        // Temporarily disabled Google Sign-In
+        // pod("GoogleSignIn") {
+        //     version = "~> 7.1"
+        // }
         
         framework {
             baseName = "Shared"
@@ -76,6 +80,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.koin.android)
+            implementation(libs.play.services.auth)
         }
         
         commonTest.dependencies {

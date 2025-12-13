@@ -5,6 +5,7 @@ import com.brainburst.data.repository.PuzzleRepositoryImpl
 import com.brainburst.domain.repository.AuthRepository
 import com.brainburst.domain.repository.PuzzleRepository
 import com.brainburst.presentation.auth.AuthViewModel
+import com.brainburst.presentation.home.HomeViewModel
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.splash.SplashViewModel
 import dev.gitlive.firebase.Firebase
@@ -33,6 +34,9 @@ val appModule = module {
     
     // ViewModels
     factory { SplashViewModel(get(), get(), get()) }
-    factory { AuthViewModel(get(), get(), get()) }
+    factory { AuthViewModel(get(), get(), get(), get()) }
+    factory { HomeViewModel(get(), get(), get()) }
 }
+
+fun getAllModules() = listOf(appModule, getPlatformModule())
 
