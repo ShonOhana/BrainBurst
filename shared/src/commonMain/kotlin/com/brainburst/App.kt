@@ -8,10 +8,15 @@ import com.brainburst.presentation.auth.AuthScreen
 import com.brainburst.presentation.auth.AuthViewModel
 import com.brainburst.presentation.home.HomeScreen
 import com.brainburst.presentation.home.HomeViewModel
+import com.brainburst.presentation.leaderboard.LeaderboardScreen
+import com.brainburst.presentation.leaderboard.LeaderboardViewModel
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
 import com.brainburst.presentation.splash.SplashScreen
 import com.brainburst.presentation.splash.SplashViewModel
+import com.brainburst.presentation.sudoku.SudokuScreen
+import com.brainburst.presentation.sudoku.SudokuViewModel
+import org.koin.core.parameter.parametersOf
 import com.brainburst.ui.theme.BrainBurstTheme
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
@@ -46,10 +51,13 @@ private fun AppContent() {
             HomeScreen(viewModel)
         }
         is Screen.Sudoku -> {
-            // TODO: Implement Sudoku screen
+            val viewModel: SudokuViewModel = koinInject()
+            SudokuScreen(viewModel)
         }
         is Screen.Leaderboard -> {
-            // TODO: Implement Leaderboard screen
+            val leaderboardScreen = currentScreen as Screen.Leaderboard
+            val viewModel: LeaderboardViewModel = koinInject { parametersOf(leaderboardScreen.gameType) }
+            LeaderboardScreen(viewModel)
         }
     }
 }

@@ -1,8 +1,11 @@
 package com.brainburst.presentation.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,7 +51,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                             )
                         } else {
                             Icon(
-                                imageVector = Icons.Default.ExitToApp,
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                 contentDescription = "Logout"
                             )
                         }
@@ -102,61 +105,190 @@ fun HomeScreen(viewModel: HomeViewModel) {
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Mini Sudoku Card (Placeholder)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+            // Game cards
+            uiState.games.forEach { gameState ->
+                GameCard(
+                    gameState = gameState,
+                    onClick = { viewModel.onGameClick(gameState.gameType) }
                 )
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            
+            // ============================================================
+            // ADMIN TOOLS (Development Only)
+            // ============================================================
+            // Uncomment the section below to show the admin upload button
+            // Use this to quickly add test puzzles during development
+            // ============================================================
+            
+            /*
+            // Admin message (if any)
+            if (uiState.adminMessage != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (uiState.adminMessage!!.startsWith("✅"))
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.errorContainer
+                    )
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = "Mini Sudoku 6×6",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Coming Soon!",
+                            text = uiState.adminMessage!!,
+                            modifier = Modifier.weight(1f),
                             style = MaterialTheme.typography.bodyMedium
                         )
+                        TextButton(onClick = { viewModel.clearAdminMessage() }) {
+                            Text("OK")
+                        }
                     }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            
+            // ADMIN: Upload test puzzle button (for development only)
+            OutlinedButton(
+                onClick = { viewModel.uploadTestPuzzle() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("🔧 Upload Today's Test Puzzle")
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "⚠️ Admin button: Tap once to add today's puzzle to Firestore",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            */
+        }
+    }
+}
+
+@Composable
+fun GameCard(
+    gameState: GameStateUI,
+    onClick: () -> Unit
+) {
+    val isClickable = gameState is GameStateUI.Available || gameState is GameStateUI.Completed
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .then(
+                if (isClickable) Modifier.clickable(onClick = onClick)
+                else Modifier
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = when (gameState) {
+                is GameStateUI.Available -> MaterialTheme.colorScheme.primaryContainer
+                is GameStateUI.Completed -> MaterialTheme.colorScheme.tertiaryContainer
+                is GameStateUI.ComingSoon -> MaterialTheme.colorScheme.surfaceVariant
+                is GameStateUI.Loading -> MaterialTheme.colorScheme.surface
+            }
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Title
+                Text(
+                    text = gameState.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = when (gameState) {
+                        is GameStateUI.Available -> MaterialTheme.colorScheme.onPrimaryContainer
+                        is GameStateUI.Completed -> MaterialTheme.colorScheme.onTertiaryContainer
+                        is GameStateUI.ComingSoon -> MaterialTheme.colorScheme.onSurfaceVariant
+                        is GameStateUI.Loading -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Subtitle
+                Text(
+                    text = gameState.subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = when (gameState) {
+                        is GameStateUI.Available -> MaterialTheme.colorScheme.onPrimaryContainer
+                        is GameStateUI.Completed -> MaterialTheme.colorScheme.onTertiaryContainer
+                        is GameStateUI.ComingSoon -> MaterialTheme.colorScheme.onSurfaceVariant
+                        is GameStateUI.Loading -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                
+                // Completion time for completed games
+                if (gameState is GameStateUI.Completed) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Solved in ${gameState.completionTimeFormatted}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Zip Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Zip",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Coming Soon",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+            // Status chip
+            when (gameState) {
+                is GameStateUI.Available -> {
+                    AssistChip(
+                        onClick = onClick,
+                        label = { Text("Play Now") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+                }
+                is GameStateUI.Completed -> {
+                    AssistChip(
+                        onClick = onClick,
+                        label = { Text("View Results") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+                }
+                is GameStateUI.ComingSoon -> {
+                    AssistChip(
+                        onClick = {},
+                        label = { Text("Coming Soon") },
+                        modifier = Modifier.align(Alignment.TopEnd),
+                        enabled = false
+                    )
+                }
+                is GameStateUI.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.TopEnd),
+                        strokeWidth = 2.dp
+                    )
                 }
             }
         }

@@ -31,3 +31,4 @@ interface PuzzleRepository {
     suspend fun hasUserCompletedToday(userId: String, gameType: GameType): Result<Boolean>
 }
 
+

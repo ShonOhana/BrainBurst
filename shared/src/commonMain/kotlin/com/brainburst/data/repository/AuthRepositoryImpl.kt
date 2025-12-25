@@ -4,22 +4,32 @@ import com.brainburst.domain.model.User
 import com.brainburst.domain.repository.AuthRepository
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.GoogleAuthProvider
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class AuthRepositoryImpl(
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val coroutineScope: CoroutineScope
 ) : AuthRepository {
     
-    override val currentUser: Flow<User?> = firebaseAuth.authStateChanged.map { firebaseUser ->
-        firebaseUser?.let {
-            User(
-                uid = it.uid,
-                email = it.email,
-                displayName = it.displayName
-            )
+    override val currentUser: StateFlow<User?> = firebaseAuth.authStateChanged
+        .map { firebaseUser ->
+            firebaseUser?.let {
+                User(
+                    uid = it.uid,
+                    email = it.email,
+                    displayName = it.displayName
+                )
+            }
         }
-    }
+        .stateIn(
+            scope = coroutineScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null
+        )
     
     override suspend fun signInWithEmail(email: String, password: String): Result<User> {
         return try {
@@ -91,4 +101,5 @@ class AuthRepositoryImpl(
         }
     }
 }
+
 

@@ -11,3 +11,4 @@ actual fun getPlatformModule(): Module = module {
     single { GoogleSignInProvider(get<ComponentActivity>()) }
 }
 
+

@@ -11,7 +11,6 @@ Pod::Spec.new do |spec|
     spec.ios.deployment_target    = '15.0'
     spec.dependency 'FirebaseAuth', '11.5.0'
     spec.dependency 'FirebaseFirestore', '11.5.0'
-    spec.dependency 'GoogleSignIn', '~> 7.1'
                 
     if !Dir.exist?('build/cocoapods/framework/Shared.framework') || Dir.empty?('build/cocoapods/framework/Shared.framework')
         raise "

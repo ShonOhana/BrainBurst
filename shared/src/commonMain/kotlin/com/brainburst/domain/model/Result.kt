@@ -12,3 +12,4 @@ data class ResultDto(
     val movesCount: Int
 )
 
+

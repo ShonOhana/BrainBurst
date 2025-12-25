@@ -1,13 +1,14 @@
 package com.brainburst.domain.repository
 
 import com.brainburst.domain.model.User
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface AuthRepository {
     /**
-     * Get the current authenticated user as a Flow
+     * Get the current authenticated user as a StateFlow
+     * Can be accessed synchronously via .value
      */
-    val currentUser: Flow<User?>
+    val currentUser: StateFlow<User?>
     
     /**
      * Sign in with email and password
@@ -29,4 +30,5 @@ interface AuthRepository {
      */
     suspend fun signOut(): Result<Unit>
 }
+
 
