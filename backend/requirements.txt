@@ -1,0 +1,15 @@
+# BrainBurst Backend - Python Cloud Function/Cloud Run
+# AI-powered puzzle generation using OpenAI
+
+# OpenAI SDK
+openai==1.57.4
+
+# Firebase Admin SDK
+firebase-admin==6.5.0
+
+# Cloud Functions Framework (for local testing and deployment)
+functions-framework==3.8.2
+
+# Utilities
+python-dotenv==1.0.1
+
