@@ -19,6 +19,9 @@ captures/
 shared/build/
 androidApp/build/
 
+.env
+.env.*
+
 # IntelliJ / Android Studio
 .idea/
 *.iml
