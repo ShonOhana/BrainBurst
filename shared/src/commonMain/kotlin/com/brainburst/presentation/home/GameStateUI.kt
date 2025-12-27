@@ -16,7 +16,9 @@ sealed class GameStateUI {
     data class Available(
         override val gameType: GameType,
         override val title: String,
-        override val subtitle: String
+        override val subtitle: String,
+        val formattedDate: String,  // e.g., "Friday, Dec 26"
+        val hasTodayPuzzle: Boolean = true  // If false, button should navigate to leaderboard instead of game
     ) : GameStateUI()
     
     /**
@@ -26,7 +28,8 @@ sealed class GameStateUI {
         override val gameType: GameType,
         override val title: String,
         override val subtitle: String,
-        val completionTimeFormatted: String  // e.g., "02:45"
+        val completionTimeFormatted: String,  // e.g., "02:45"
+        val formattedDate: String  // e.g., "Friday, Dec 26"
     ) : GameStateUI()
     
     /**

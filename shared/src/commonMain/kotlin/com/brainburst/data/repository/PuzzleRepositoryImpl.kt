@@ -7,7 +7,9 @@ import com.brainburst.domain.repository.PuzzleRepository
 import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -118,6 +120,35 @@ class PuzzleRepositoryImpl(
                 .get()
             
             Result.success(results.documents.isNotEmpty())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun getLatestAvailablePuzzleDate(gameType: GameType): Result<String?> {
+        return try {
+            // First check today's puzzle
+            val today = Clock.System.todayIn(TimeZone.UTC)
+            val todayStr = today.toString()
+            val todayPuzzleId = "${gameType.name}_$todayStr"
+            val todayPuzzle = puzzlesCollection.document(todayPuzzleId).get()
+            
+            if (todayPuzzle.exists) {
+                return Result.success(todayStr)
+            }
+            
+            // If today's puzzle doesn't exist, check yesterday's
+            val yesterday = today.minus(DatePeriod(days = 1))
+            val yesterdayStr = yesterday.toString()
+            val yesterdayPuzzleId = "${gameType.name}_$yesterdayStr"
+            val yesterdayPuzzle = puzzlesCollection.document(yesterdayPuzzleId).get()
+            
+            if (yesterdayPuzzle.exists) {
+                return Result.success(yesterdayStr)
+            }
+            
+            // No puzzle found for today or yesterday
+            Result.success(null)
         } catch (e: Exception) {
             Result.failure(e)
         }

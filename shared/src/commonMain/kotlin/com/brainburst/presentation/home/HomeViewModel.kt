@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
 data class HomeUiState(
     val user: User? = null,
@@ -94,11 +97,28 @@ class HomeViewModel(
     }
     
     private suspend fun loadSudokuState(userId: String): GameStateUI {
-        // Check if user has completed today's puzzle
-        val hasCompleted = puzzleRepository.hasUserCompletedToday(
-            userId = userId,
-            gameType = GameType.MINI_SUDOKU_6X6
-        ).getOrElse { false }
+        // Get the latest available puzzle date (today's if exists, otherwise yesterday's)
+        // Returns null if neither today nor yesterday has a puzzle
+        val latestDate = puzzleRepository.getLatestAvailablePuzzleDate(GameType.MINI_SUDOKU_6X6)
+            .getOrNull()
+        
+        // Check if today's puzzle exists
+        val today = Clock.System.todayIn(TimeZone.UTC).toString()
+        val hasTodayPuzzle = latestDate == today
+        
+        // Format the date for display - only if a puzzle exists (today or yesterday)
+        // If neither exists, formattedDate will be empty and won't display
+        val formattedDate = latestDate?.let { DateFormatter.formatPuzzleDate(it) } ?: ""
+        
+        // Check if user has completed today's puzzle (only relevant if today's puzzle exists)
+        val hasCompleted = if (hasTodayPuzzle) {
+            puzzleRepository.hasUserCompletedToday(
+                userId = userId,
+                gameType = GameType.MINI_SUDOKU_6X6
+            ).getOrElse { false }
+        } else {
+            false // If today's puzzle doesn't exist, user can't have completed it
+        }
         
         return if (hasCompleted) {
             // TODO: Load actual completion time from results
@@ -106,13 +126,16 @@ class HomeViewModel(
                 gameType = GameType.MINI_SUDOKU_6X6,
                 title = "Mini Sudoku 6×6",
                 subtitle = "Daily 6×6 Sudoku challenge",
-                completionTimeFormatted = "--:--"
+                completionTimeFormatted = "--:--",
+                formattedDate = formattedDate
             )
         } else {
             GameStateUI.Available(
                 gameType = GameType.MINI_SUDOKU_6X6,
                 title = "Mini Sudoku 6×6",
-                subtitle = "Daily 6×6 Sudoku challenge"
+                subtitle = "Daily 6×6 Sudoku challenge",
+                formattedDate = formattedDate,
+                hasTodayPuzzle = hasTodayPuzzle
             )
         }
     }
@@ -124,8 +147,14 @@ class HomeViewModel(
                 val gameState = _uiState.value.games.find { it.gameType == gameType }
                 when (gameState) {
                     is GameStateUI.Available -> {
-                        // Navigate to play the game
-                        navigator.navigateTo(Screen.Sudoku)
+                        // If today's puzzle doesn't exist, navigate to leaderboard instead of game
+                        if (gameState.hasTodayPuzzle) {
+                            // Navigate to play the game
+                            navigator.navigateTo(Screen.Sudoku)
+                        } else {
+                            // Navigate to leaderboard to see yesterday's results
+                            navigator.navigateTo(Screen.Leaderboard(gameType))
+                        }
                     }
                     is GameStateUI.Completed -> {
                         // Navigate to leaderboard to see results

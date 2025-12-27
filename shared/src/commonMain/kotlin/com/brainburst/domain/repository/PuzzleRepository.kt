@@ -29,6 +29,12 @@ interface PuzzleRepository {
      * Check if user has already submitted a result for today's puzzle
      */
     suspend fun hasUserCompletedToday(userId: String, gameType: GameType): Result<Boolean>
+    
+    /**
+     * Get the latest available puzzle date for a game type (today's if exists, otherwise yesterday's)
+     * Returns the date string in yyyy-MM-dd format
+     */
+    suspend fun getLatestAvailablePuzzleDate(gameType: GameType): Result<String?>
 }
 
 
