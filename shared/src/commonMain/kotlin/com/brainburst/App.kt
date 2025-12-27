@@ -16,6 +16,7 @@ import com.brainburst.presentation.splash.SplashScreen
 import com.brainburst.presentation.splash.SplashViewModel
 import com.brainburst.presentation.sudoku.SudokuScreen
 import com.brainburst.presentation.sudoku.SudokuViewModel
+import com.brainburst.platform.PlatformBackHandler
 import org.koin.core.parameter.parametersOf
 import com.brainburst.ui.theme.BrainBurstTheme
 import org.koin.compose.KoinApplication
@@ -52,11 +53,19 @@ private fun AppContent() {
         }
         is Screen.Sudoku -> {
             val viewModel: SudokuViewModel = koinInject()
+            // Handle native back button - same as toolbar back arrow
+            PlatformBackHandler(enabled = true) {
+                viewModel.onBackPress()
+            }
             SudokuScreen(viewModel)
         }
         is Screen.Leaderboard -> {
             val leaderboardScreen = currentScreen as Screen.Leaderboard
             val viewModel: LeaderboardViewModel = koinInject { parametersOf(leaderboardScreen.gameType) }
+            // Handle native back button - same as toolbar back arrow
+            PlatformBackHandler(enabled = true) {
+                viewModel.onBackPress()
+            }
             LeaderboardScreen(viewModel)
         }
     }
