@@ -26,7 +26,9 @@ interface PuzzleRepository {
     suspend fun getResultsForPuzzle(puzzleId: String, limit: Int = 50): Result<List<ResultDto>>
     
     /**
-     * Check if user has already submitted a result for today's puzzle
+     * Check if user has already submitted a result for the latest available puzzle.
+     * This checks today's puzzle if it exists, otherwise checks yesterday's puzzle.
+     * This handles the case where it's after midnight UTC but before the new puzzle is generated (9 AM UTC).
      */
     suspend fun hasUserCompletedToday(userId: String, gameType: GameType): Result<Boolean>
     

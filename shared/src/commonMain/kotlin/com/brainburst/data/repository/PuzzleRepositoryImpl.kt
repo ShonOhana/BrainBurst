@@ -111,8 +111,16 @@ class PuzzleRepositoryImpl(
     
     override suspend fun hasUserCompletedToday(userId: String, gameType: GameType): Result<Boolean> {
         return try {
-            val today = Clock.System.todayIn(TimeZone.UTC).toString()
-            val puzzleId = "${gameType.name}_$today"
+            // Get the latest available puzzle date (today's if exists, otherwise yesterday's)
+            // This handles the case where it's after midnight UTC but before 9 AM UTC (when new puzzle is generated)
+            val latestDate = getLatestAvailablePuzzleDate(gameType).getOrNull()
+            
+            // If no puzzle exists at all, user can't have completed it
+            if (latestDate == null) {
+                return Result.success(false)
+            }
+            
+            val puzzleId = "${gameType.name}_$latestDate"
             
             val results = resultsCollection
                 .where { "userId" equalTo userId }

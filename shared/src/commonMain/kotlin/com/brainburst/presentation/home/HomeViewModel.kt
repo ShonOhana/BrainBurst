@@ -110,14 +110,15 @@ class HomeViewModel(
         // If neither exists, formattedDate will be empty and won't display
         val formattedDate = latestDate?.let { DateFormatter.formatPuzzleDate(it) } ?: ""
         
-        // Check if user has completed today's puzzle (only relevant if today's puzzle exists)
-        val hasCompleted = if (hasTodayPuzzle) {
+        // Check if user has completed the latest available puzzle
+        // This will check yesterday's puzzle if today's doesn't exist yet (before 9 AM UTC)
+        val hasCompleted = if (latestDate != null) {
             puzzleRepository.hasUserCompletedToday(
                 userId = userId,
                 gameType = GameType.MINI_SUDOKU_6X6
             ).getOrElse { false }
         } else {
-            false // If today's puzzle doesn't exist, user can't have completed it
+            false // If no puzzle exists, user can't have completed it
         }
         
         return if (hasCompleted) {
