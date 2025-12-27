@@ -34,8 +34,14 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
     
+    // Cache to avoid unnecessary network calls
+    private var lastCheckedDate: String? = null
+    private var cachedSudokuState: GameStateUI? = null
+    private var isDataLoaded = false
+    
     init {
         observeAuthState()
+        observeNavigation()
         loadGameStates()
     }
     
@@ -47,38 +53,74 @@ class HomeViewModel(
                 // If user becomes null (logged out), navigate to auth
                 if (user == null) {
                     navigator.navigateTo(Screen.Auth)
+                    // Clear cache on logout
+                    lastCheckedDate = null
+                    cachedSudokuState = null
+                    isDataLoaded = false
                 } else {
-                    // Reload game states when user changes
-                    loadGameStates()
+                    // Reload game states when user changes (force refresh for new user)
+                    loadGameStates(forceRefresh = true)
                 }
             }
         }
     }
     
-    private fun loadGameStates() {
+    private fun loadGameStates(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             val user = authRepository.currentUser.value ?: return@launch
             
-            // Start with loading states
-            _uiState.value = _uiState.value.copy(
-                games = listOf(
-                    GameStateUI.Loading(
-                        gameType = GameType.MINI_SUDOKU_6X6,
-                        title = "Mini Sudoku 6×6"
-                    ),
-                    GameStateUI.ComingSoon(
-                        gameType = GameType.ZIP,
-                        title = "Zip"
-                    ),
-                    GameStateUI.ComingSoon(
-                        gameType = GameType.TANGO,
-                        title = "Tango"
+            // Check if we need to reload based on date change
+            val today = Clock.System.todayIn(TimeZone.UTC).toString()
+            val shouldReload = forceRefresh || 
+                !isDataLoaded || 
+                lastCheckedDate != today ||
+                cachedSudokuState == null
+            
+            // If we have cached data and date hasn't changed, use cache
+            if (!shouldReload && cachedSudokuState != null) {
+                _uiState.value = _uiState.value.copy(
+                    games = listOf(
+                        cachedSudokuState!!,
+                        GameStateUI.ComingSoon(
+                            gameType = GameType.ZIP,
+                            title = "Zip"
+                        ),
+                        GameStateUI.ComingSoon(
+                            gameType = GameType.TANGO,
+                            title = "Tango"
+                        )
                     )
                 )
-            )
+                return@launch
+            }
+            
+            // Start with loading states only if we don't have cached data
+            if (cachedSudokuState == null) {
+                _uiState.value = _uiState.value.copy(
+                    games = listOf(
+                        GameStateUI.Loading(
+                            gameType = GameType.MINI_SUDOKU_6X6,
+                            title = "Mini Sudoku 6×6"
+                        ),
+                        GameStateUI.ComingSoon(
+                            gameType = GameType.ZIP,
+                            title = "Zip"
+                        ),
+                        GameStateUI.ComingSoon(
+                            gameType = GameType.TANGO,
+                            title = "Tango"
+                        )
+                    )
+                )
+            }
             
             // Load Sudoku state
             val sudokuState = loadSudokuState(user.uid)
+            
+            // Cache the result
+            cachedSudokuState = sudokuState
+            lastCheckedDate = today
+            isDataLoaded = true
             
             _uiState.value = _uiState.value.copy(
                 games = listOf(
@@ -206,8 +248,8 @@ class HomeViewModel(
             result.fold(
                 onSuccess = { message ->
                     _uiState.value = _uiState.value.copy(adminMessage = message)
-                    // Reload game states to show the new puzzle
-                    loadGameStates()
+                    // Reload game states to show the new puzzle (force refresh)
+                    loadGameStates(forceRefresh = true)
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
@@ -220,6 +262,35 @@ class HomeViewModel(
     
     fun clearAdminMessage() {
         _uiState.value = _uiState.value.copy(adminMessage = null)
+    }
+    
+    /**
+     * Refresh game states - useful when returning from game screen after completion
+     */
+    fun refreshGameStates() {
+        loadGameStates(forceRefresh = true)
+    }
+    
+    /**
+     * Observe navigation to refresh when returning to Home from game screens
+     * This ensures completion status is updated when user returns from playing a game
+     */
+    private fun observeNavigation() {
+        viewModelScope.launch {
+            var previousScreen: Screen? = null
+            navigator.currentScreen.collect { currentScreen ->
+                // When navigating to Home from Sudoku or Leaderboard, refresh to get updated completion status
+                if (currentScreen is Screen.Home && previousScreen != null) {
+                    val cameFromGameScreen = previousScreen is Screen.Sudoku || previousScreen is Screen.Leaderboard
+                    if (cameFromGameScreen && isDataLoaded) {
+                        // Only refresh if we already have data loaded (to avoid double loading on initial load)
+                        // This ensures we get the latest completion status when returning from game
+                        loadGameStates(forceRefresh = true)
+                    }
+                }
+                previousScreen = currentScreen
+            }
+        }
     }
 }
 
