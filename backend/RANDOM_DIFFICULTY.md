@@ -75,3 +75,4 @@ difficulty = random.choice(["easy", "medium", "hard"])
 **Status**: ✅ Random difficulty implemented!
 **Next Generation**: Will randomly select Easy/Medium/Hard
 
+

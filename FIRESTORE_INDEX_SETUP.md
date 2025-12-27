@@ -107,3 +107,4 @@ If you add more game types or leaderboard filters, you might need additional ind
 **Current Status**: Waiting for you to create the index 🔧
 **Next Step**: Click the link in your app or create manually in Firebase Console
 
+

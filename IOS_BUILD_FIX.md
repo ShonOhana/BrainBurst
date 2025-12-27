@@ -139,3 +139,4 @@ String.format("%d", value)
 2. Test the app on iOS simulator
 3. Continue with Phase 7 (Ads & Leaderboard)
 
+

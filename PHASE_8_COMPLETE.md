@@ -259,6 +259,19 @@ A: Run `python main.py --test` locally. Perfect for development!
 ---
 
 **Status**: Phase 8 Code Complete! ✅
-**Next**: Setup API keys and test! 🧪
-**Then**: Deploy for daily automation! ☁️
+**Next**: Deploy for daily automation! ☁️
+
+## 🚀 Ready to Deploy?
+
+**Quick Deploy (5 minutes):**
+```bash
+cd backend
+export OPENAI_API_KEY=sk-proj-YOUR_KEY
+./deploy.sh          # Deploy Cloud Function
+./setup_scheduler.sh  # Setup daily automation
+```
+
+**Full Guide:** See `backend/DEPLOYMENT_GUIDE.md`
+
+After deployment, puzzles will generate automatically every day at **9:00 AM UTC**! 🎉
 

@@ -97,3 +97,4 @@ class Sudoku6x6Definition(
     }
 }
 
+

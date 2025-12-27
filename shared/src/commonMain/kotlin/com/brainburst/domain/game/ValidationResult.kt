@@ -10,3 +10,4 @@ data class ValidationResult(
     val invalidPositions: List<Position> = emptyList()
 )
 
+

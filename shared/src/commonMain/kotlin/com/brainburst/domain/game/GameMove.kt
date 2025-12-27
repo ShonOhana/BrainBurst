@@ -13,3 +13,4 @@ data class SudokuMove(
     val value: Int  // 0 to clear, 1-6 for Mini Sudoku 6x6
 ) : GameMove
 
+

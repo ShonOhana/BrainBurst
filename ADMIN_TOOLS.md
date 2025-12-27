@@ -68,3 +68,4 @@ Once Phase 8 is complete, puzzles will be generated automatically:
 **Current Status**: Admin button commented out ✅
 **To re-enable**: Uncomment the block in `HomeScreen.kt`
 
+

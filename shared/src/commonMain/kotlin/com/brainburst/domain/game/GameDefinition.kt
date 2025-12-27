@@ -53,3 +53,4 @@ interface GameDefinition<Payload : Any, PlayerState : Any> {
     fun isCompleted(state: PlayerState, payload: Payload): Boolean
 }
 
+

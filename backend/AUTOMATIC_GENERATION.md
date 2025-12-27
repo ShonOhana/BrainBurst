@@ -1,25 +1,41 @@
 # Automatic Daily Puzzle Generation
 
-## 🔄 Current Status: **Manual Only**
+## 🚀 Quick Start: Deploy Now!
+
+**Ready to deploy?** Follow the complete guide:
+👉 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** 👈
+
+Or use the automated scripts:
+
+```bash
+cd backend
+
+# Step 1: Deploy Cloud Function (no API keys needed!)
+./deploy.sh
+
+# Step 2: Setup Cloud Scheduler (after deployment)
+./setup_scheduler.sh
+```
+
+**Note:** No OpenAI API key needed! The generator uses deterministic algorithms.
+
+---
+
+## 🔄 Current Status
+
+### Before Deployment: **Manual Only**
 
 Right now, puzzles are **NOT** generated automatically. You need to:
 
-### Option 1: Manual Generation (Current)
 ```bash
 cd backend
 source venv/bin/activate
 python main.py --test  # Generate today's puzzle
 ```
 
-### Option 2: Automatic Generation (Requires Setup)
+### After Deployment: **Fully Automatic!** ✅
 
-To make it automatic, you need to:
-
-#### Step 1: Deploy Cloud Function
-Deploy the backend to Google Cloud Functions so it can run automatically.
-
-#### Step 2: Setup Cloud Scheduler
-Configure a scheduled job to call the function every day at 9:00 AM.
+Once deployed, puzzles will generate automatically every day at 9:00 AM UTC.
 
 ---
 
@@ -29,7 +45,7 @@ Once deployed:
 
 1. **Cloud Scheduler** triggers daily at **9:00 AM UTC**
 2. **Cloud Function** runs automatically
-3. **OpenAI** generates a new puzzle
+3. **Deterministic algorithm** generates a new puzzle (no AI needed!)
 4. **Puzzle** saved to Firestore
 5. **Users** see new puzzle in app!
 
@@ -51,7 +67,6 @@ gcloud functions deploy generate_daily_puzzle \
   --entry-point=generate_daily_puzzle \
   --trigger-http \
   --allow-unauthenticated \
-  --set-env-vars OPENAI_API_KEY=your-key-here
 ```
 
 ### 2. Setup Cloud Scheduler
@@ -93,13 +108,13 @@ gcloud scheduler jobs run daily-puzzle-sudoku --location=us-central1
 
 **Now**: Manual generation only
 **After deployment**: Fully automatic at 9 AM daily
-**Cost**: ~$0.04/year for OpenAI + FREE for Cloud Functions/Scheduler
+**Cost**: FREE! (No OpenAI needed - generator is deterministic)
 
 ---
 
 **Next Steps**: 
-1. Fix OpenAI quota issue (add billing)
-2. Test puzzle generation locally
-3. Deploy to Cloud Functions (optional, for automation)
-4. Setup Cloud Scheduler (optional, for automation)
+1. Deploy to Cloud Functions (see DEPLOYMENT_SIMPLE.md)
+2. Setup Cloud Scheduler
+3. Test by manually triggering scheduler
+4. Verify puzzle appears in Firestore
 
