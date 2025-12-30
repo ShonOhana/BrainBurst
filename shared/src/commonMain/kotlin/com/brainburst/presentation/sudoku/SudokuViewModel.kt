@@ -69,6 +69,7 @@ class SudokuViewModel(
     private var elapsedMillisWhenPaused: Long = 0L
     private var timerStartedAtMillis: Long = 0L
     private var isTimerRunning: Boolean = false
+    private var lastSaveTimeMillis: Long = 0L
     
     init {
         loadPuzzle()
@@ -89,6 +90,11 @@ class SudokuViewModel(
                             errorMessage = "No puzzle available for today. Please try again later."
                         )
                         return@launch
+                    }
+                    
+                    // If this is a different puzzle than before, clear old state
+                    if (puzzleId != null && puzzleId != puzzleDto.puzzleId) {
+                        gameStateRepository.clearGameState(puzzleId!!)
                     }
                     
                     puzzleId = puzzleDto.puzzleId
@@ -179,6 +185,12 @@ class SudokuViewModel(
         }
         
         _uiState.value = _uiState.value.copy(elapsedTimeFormatted = formatted)
+        
+        // Auto-save every 5 seconds to handle app being killed
+        if (now - lastSaveTimeMillis >= 5000) {
+            saveGameState()
+            lastSaveTimeMillis = now
+        }
     }
     
     private fun updateUiFromState() {
