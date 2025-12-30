@@ -67,6 +67,9 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
             
+            // DataStore for persistence
+            implementation(libs.datastore.preferences)
+            
             // Koin
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -81,6 +84,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.koin.android)
             implementation(libs.play.services.auth)
+            implementation(libs.datastore.preferences.android)
         }
         
         commonTest.dependencies {

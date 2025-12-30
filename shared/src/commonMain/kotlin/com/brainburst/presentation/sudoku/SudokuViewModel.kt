@@ -8,7 +8,10 @@ import com.brainburst.domain.game.sudoku.Sudoku6x6Payload
 import com.brainburst.domain.game.sudoku.SudokuState
 import com.brainburst.domain.model.GameType
 import com.brainburst.domain.model.ResultDto
+import com.brainburst.domain.model.SavedGameState
+import com.brainburst.domain.model.toSerializable
 import com.brainburst.domain.repository.AuthRepository
+import com.brainburst.domain.repository.GameStateRepository
 import com.brainburst.domain.repository.PuzzleRepository
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
@@ -46,6 +49,7 @@ class SudokuViewModel(
     private val gameRegistry: GameRegistry,
     private val puzzleRepository: PuzzleRepository,
     private val authRepository: AuthRepository,
+    private val gameStateRepository: GameStateRepository,
     private val navigator: Navigator,
     private val viewModelScope: CoroutineScope
 ) {
@@ -59,6 +63,12 @@ class SudokuViewModel(
     private var payload: Sudoku6x6Payload? = null
     private var currentState: SudokuState? = null
     private var timerJob: Job? = null
+    private var puzzleId: String? = null
+    
+    // Timer state
+    private var elapsedMillisWhenPaused: Long = 0L
+    private var timerStartedAtMillis: Long = 0L
+    private var isTimerRunning: Boolean = false
     
     init {
         loadPuzzle()
@@ -81,19 +91,36 @@ class SudokuViewModel(
                         return@launch
                     }
                     
+                    puzzleId = puzzleDto.puzzleId
+                    
                     // Decode payload
                     val definition = gameRegistry.get<Sudoku6x6Payload, SudokuState>(GameType.MINI_SUDOKU_6X6)
                     sudokuDefinition = definition as Sudoku6x6Definition
                     payload = definition.decodePayload(puzzleDto.payload)
                     
-                    // Initialize state
-                    currentState = definition.initialState(payload!!)
+                    // Try to restore saved state
+                    val savedState = gameStateRepository.loadGameState(puzzleDto.puzzleId)
+                    
+                    if (savedState != null) {
+                        // Restore from saved state
+                        currentState = SudokuState(
+                            board = savedState.board,
+                            fixedCells = savedState.fixedCells.map { it.toPosition() }.toSet(),
+                            startedAtMillis = savedState.startedAtMillis,
+                            movesCount = savedState.movesCount
+                        )
+                        elapsedMillisWhenPaused = savedState.elapsedMillisAtPause
+                    } else {
+                        // Initialize fresh state
+                        currentState = definition.initialState(payload!!)
+                        elapsedMillisWhenPaused = 0L
+                    }
                     
                     // Update UI
                     updateUiFromState()
                     
                     // Start timer
-                    startTimer()
+                    resumeTimer()
                     
                     _uiState.value = _uiState.value.copy(isLoading = false)
                 },
@@ -107,20 +134,50 @@ class SudokuViewModel(
         }
     }
     
-    private fun startTimer() {
+    private fun resumeTimer() {
+        if (isTimerRunning) return
+        
+        isTimerRunning = true
+        timerStartedAtMillis = Clock.System.now().toEpochMilliseconds()
+        
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            while (true) {
+            while (isTimerRunning) {
                 delay(1000)
                 updateTimer()
             }
         }
     }
     
+    private fun pauseTimer() {
+        if (!isTimerRunning) return
+        
+        isTimerRunning = false
+        timerJob?.cancel()
+        
+        // Calculate elapsed time and add to paused total
+        val now = Clock.System.now().toEpochMilliseconds()
+        val sessionElapsed = now - timerStartedAtMillis
+        elapsedMillisWhenPaused += sessionElapsed
+        
+        // Save state when pausing
+        saveGameState()
+    }
+    
     private fun updateTimer() {
-        val state = currentState ?: return
-        val currentTime = Clock.System.now().toEpochMilliseconds()
-        val formatted = state.getFormattedTime(currentTime)
+        val now = Clock.System.now().toEpochMilliseconds()
+        val sessionElapsed = now - timerStartedAtMillis
+        val totalElapsed = elapsedMillisWhenPaused + sessionElapsed
+        
+        val elapsedSeconds = totalElapsed / 1000
+        val minutes = elapsedSeconds / 60
+        val seconds = elapsedSeconds % 60
+        val formatted = buildString {
+            append(if (minutes < 10) "0$minutes" else "$minutes")
+            append(":")
+            append(if (seconds < 10) "0$seconds" else "$seconds")
+        }
+        
         _uiState.value = _uiState.value.copy(elapsedTimeFormatted = formatted)
     }
     
@@ -139,6 +196,9 @@ class SudokuViewModel(
             movesCount = state.movesCount,
             isComplete = state.isComplete()
         )
+        
+        // Update timer display
+        updateTimer()
     }
     
     fun onCellClick(position: Position) {
@@ -161,6 +221,9 @@ class SudokuViewModel(
         
         // Update UI
         updateUiFromState()
+        
+        // Save state after move
+        saveGameState()
     }
     
     fun onErasePress() {
@@ -182,11 +245,10 @@ class SudokuViewModel(
         // Check if solution is correct
         if (definition.isCompleted(state, payloadData)) {
             // Stop timer
-            timerJob?.cancel()
+            pauseTimer()
             
-            // Calculate duration
-            val currentTime = Clock.System.now().toEpochMilliseconds()
-            val durationMs = state.getElapsedMillis(currentTime)
+            // Calculate total duration
+            val durationMs = elapsedMillisWhenPaused
             
             // Emit completion event
             _events.value = SudokuEvent.PuzzleCompleted(
@@ -197,10 +259,40 @@ class SudokuViewModel(
             // Submit result to Firestore
             submitResult(durationMs, state.movesCount)
             
-            // Navigate to leaderboard (TODO: Add rewarded ad before this in Phase 7)
+            // Clear saved state
+            viewModelScope.launch {
+                puzzleId?.let { gameStateRepository.clearGameState(it) }
+            }
+            
+            // Navigate to leaderboard
             navigator.navigateTo(Screen.Leaderboard(GameType.MINI_SUDOKU_6X6))
         } else {
             _events.value = SudokuEvent.ValidationError("Solution is incorrect. Please check your answers.")
+        }
+    }
+    
+    private fun saveGameState() {
+        val state = currentState ?: return
+        val id = puzzleId ?: return
+        
+        viewModelScope.launch {
+            // Calculate current total elapsed time
+            val now = Clock.System.now().toEpochMilliseconds()
+            val sessionElapsed = if (isTimerRunning) now - timerStartedAtMillis else 0L
+            val totalElapsed = elapsedMillisWhenPaused + sessionElapsed
+            
+            val savedState = SavedGameState(
+                puzzleId = id,
+                gameType = GameType.MINI_SUDOKU_6X6,
+                board = state.board,
+                fixedCells = state.fixedCells.toSerializable(),
+                startedAtMillis = state.startedAtMillis,
+                movesCount = state.movesCount,
+                elapsedMillisAtPause = totalElapsed,
+                lastSavedAtMillis = now
+            )
+            
+            gameStateRepository.saveGameState(savedState)
         }
     }
     
@@ -223,7 +315,7 @@ class SudokuViewModel(
     }
     
     fun onBackPress() {
-        timerJob?.cancel()
+        pauseTimer()
         navigator.navigateTo(Screen.Home)
     }
     
@@ -232,7 +324,15 @@ class SudokuViewModel(
     }
     
     fun onCleared() {
-        timerJob?.cancel()
+        pauseTimer()
+    }
+    
+    // Lifecycle methods for screen visibility
+    fun onScreenVisible() {
+        resumeTimer()
+    }
+    
+    fun onScreenHidden() {
+        pauseTimer()
     }
 }
-

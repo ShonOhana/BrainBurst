@@ -24,6 +24,14 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val event by viewModel.events.collectAsState()
     
+    // Lifecycle: Handle screen visibility
+    DisposableEffect(Unit) {
+        viewModel.onScreenVisible()
+        onDispose {
+            viewModel.onScreenHidden()
+        }
+    }
+    
     // Handle events
     LaunchedEffect(event) {
         when (val e = event) {
