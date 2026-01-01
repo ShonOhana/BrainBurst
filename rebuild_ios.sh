@@ -26,3 +26,4 @@ echo "  cd iosApp"
 echo "  open iosApp.xcworkspace"
 
 
+

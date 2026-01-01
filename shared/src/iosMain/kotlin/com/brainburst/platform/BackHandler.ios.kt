@@ -8,3 +8,4 @@ actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     // iOS navigation is typically handled through navigation controllers or swipe gestures
 }
 
+

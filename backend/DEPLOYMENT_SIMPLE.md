@@ -101,3 +101,4 @@ gcloud services enable cloudscheduler.googleapis.com
 **That's it!** No API keys, no Firebase setup, just deploy and go! 🚀
 
 
+

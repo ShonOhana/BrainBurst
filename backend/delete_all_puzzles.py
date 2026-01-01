@@ -50,3 +50,4 @@ if __name__ == "__main__":
     count = delete_all_puzzles()
     print(f"✅ Done! Deleted {count} puzzle(s)")
 
+

@@ -254,21 +254,17 @@ fun GameCard(
                 // Button on the right
                 when (gameState) {
                     is GameStateUI.Available -> {
-                        // If today's puzzle doesn't exist, show "Results" instead of "Play Now"
-                        val buttonText = if (gameState.hasTodayPuzzle) "Play Now" else "Results"
-                        val buttonIcon = if (gameState.hasTodayPuzzle) Icons.Default.PlayArrow else Icons.Default.CheckCircle
-                        
                         OutlinedButton(
                             onClick = onClick,
                             modifier = Modifier.height(36.dp)
                         ) {
                             Icon(
-                                imageVector = buttonIcon,
+                                imageVector = Icons.Default.PlayArrow,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(buttonText)
+                            Text("Play Now")
                         }
                     }
                     is GameStateUI.Completed -> {

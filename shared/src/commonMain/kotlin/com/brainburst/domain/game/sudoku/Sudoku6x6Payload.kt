@@ -25,3 +25,4 @@ data class Sudoku6x6Payload(
 }
 
 
+

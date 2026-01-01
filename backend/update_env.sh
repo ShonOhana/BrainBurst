@@ -29,3 +29,4 @@ echo "Current .env content (API key partially hidden):"
 grep OPENAI_API_KEY .env | sed 's/\(sk-proj-[A-Za-z0-9]\{8\}\).*/\1.../'
 
 
+

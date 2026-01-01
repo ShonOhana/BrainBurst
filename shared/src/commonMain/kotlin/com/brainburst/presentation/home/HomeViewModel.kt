@@ -190,17 +190,11 @@ class HomeViewModel(
                 val gameState = _uiState.value.games.find { it.gameType == gameType }
                 when (gameState) {
                     is GameStateUI.Available -> {
-                        // If today's puzzle doesn't exist, navigate to leaderboard instead of game
-                        if (gameState.hasTodayPuzzle) {
-                            // Navigate to play the game
-                            navigator.navigateTo(Screen.Sudoku)
-                        } else {
-                            // Navigate to leaderboard to see yesterday's results
-                            navigator.navigateTo(Screen.Leaderboard(gameType))
-                        }
+                        // User hasn't completed the puzzle - always let them play
+                        navigator.navigateTo(Screen.Sudoku)
                     }
                     is GameStateUI.Completed -> {
-                        // Navigate to leaderboard to see results
+                        // User has completed - show results
                         navigator.navigateTo(Screen.Leaderboard(gameType))
                     }
                     else -> {

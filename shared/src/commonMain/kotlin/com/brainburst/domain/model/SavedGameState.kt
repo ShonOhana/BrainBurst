@@ -30,3 +30,4 @@ fun Position.toSerializable() = SerializablePosition(row, col)
 
 fun Set<Position>.toSerializable() = map { it.toSerializable() }
 
+

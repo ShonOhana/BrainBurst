@@ -18,3 +18,4 @@ class GameGenerator(Protocol):
         ...
 
 
+
