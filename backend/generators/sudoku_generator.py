@@ -35,7 +35,7 @@ class SudokuGenerator:
         # This ensures variety: different puzzles, different zero positions, different visible numbers
         
         # Randomly select difficulty
-        difficulty = random.choice(["easy", "medium", "hard"])
+        difficulty = random.choice(["medium", "hard"])
         
         # Generate solution board
         solution_board = self._generate_solution_board()
@@ -188,7 +188,6 @@ class SudokuGenerator:
         Generate initial board by removing numbers, ensuring unique solution.
         
         Difficulty levels based on solver backtracking depth:
-        - Easy: depth = 0 (pure logic, no branching)
         - Medium: depth = 1 (limited branching)
         - Hard: depth > 1 (deep branching)
         """
@@ -201,7 +200,6 @@ class SudokuGenerator:
         
         # Target givens based on difficulty (approximate ranges)
         difficulty_targets = {
-            "easy": (24, 28),      # More givens = easier
             "medium": (18, 22),    # Moderate givens
             "hard": (12, 16)       # Fewer givens = harder
         }

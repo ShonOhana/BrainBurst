@@ -53,7 +53,7 @@ class SudokuValidator:
         # Allow range for Easy (24-28), Medium (18-22), Hard (12-16)
         givens = sum(1 for row in initial_board for cell in row if cell != 0)
         if givens < 12 or givens > 28:
-            return False, f"Invalid number of givens: {givens} (expected 12-28 for valid difficulty levels)"
+            return False, f"Invalid number of givens: {givens} (expected 12-22 for valid difficulty levels)"
         
         return True, "Valid"
     
