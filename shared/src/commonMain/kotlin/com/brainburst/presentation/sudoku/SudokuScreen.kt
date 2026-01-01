@@ -117,74 +117,118 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                 }
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Timer and info row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Today's Puzzle",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                    // Timer and info row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Today's Puzzle",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "⏱️ ${uiState.elapsedTimeFormatted}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = "Moves: ${uiState.movesCount}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Sudoku board
+                    SudokuBoard(
+                        board = uiState.board,
+                        fixedCells = uiState.fixedCells,
+                        selectedPosition = uiState.selectedPosition,
+                        invalidPositions = uiState.invalidPositions,
+                        onCellClick = { viewModel.onCellClick(it) }
                     )
                     
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "⏱️ ${uiState.elapsedTimeFormatted}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = "Moves: ${uiState.movesCount}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Number pad
+                    NumberPad(
+                        onNumberClick = { viewModel.onNumberPress(it) },
+                        onEraseClick = { viewModel.onErasePress() }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Submit button
+                    Button(
+                        onClick = { viewModel.onSubmit() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        enabled = uiState.isComplete && !uiState.isSubmitting
+                    ) {
+                        if (uiState.isSubmitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Submitting...")
+                        } else {
+                            Text(
+                                text = if (uiState.isComplete) "Submit Solution" else "Fill all cells to submit",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Sudoku board
-                SudokuBoard(
-                    board = uiState.board,
-                    fixedCells = uiState.fixedCells,
-                    selectedPosition = uiState.selectedPosition,
-                    invalidPositions = uiState.invalidPositions,
-                    onCellClick = { viewModel.onCellClick(it) }
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Number pad
-                NumberPad(
-                    onNumberClick = { viewModel.onNumberPress(it) },
-                    onEraseClick = { viewModel.onErasePress() }
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Submit button
-                Button(
-                    onClick = { viewModel.onSubmit() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    enabled = uiState.isComplete
-                ) {
-                    Text(
-                        text = if (uiState.isComplete) "Submit Solution" else "Fill all cells to submit",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                // Full-screen loader overlay when submitting
+                if (uiState.isSubmitting) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(64.dp),
+                                strokeWidth = 4.dp
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Submitting your result...",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Loading leaderboard",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }

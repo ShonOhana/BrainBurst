@@ -33,6 +33,7 @@ data class SudokuUiState(
     val movesCount: Int = 0,
     val isComplete: Boolean = false,
     val isLoading: Boolean = true,
+    val isSubmitting: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -262,6 +263,9 @@ class SudokuViewModel(
             // Calculate total duration
             val durationMs = elapsedMillisWhenPaused
 
+            // Set submitting state
+            _uiState.value = _uiState.value.copy(isSubmitting = true)
+
             // Emit completion event
             _events.value = SudokuEvent.PuzzleCompleted(
                 durationMs = durationMs,
@@ -270,10 +274,21 @@ class SudokuViewModel(
             // Clear saved state
             viewModelScope.launch {
                 // Submit result to Firestore
-                submitResult(durationMs, state.movesCount)
-                puzzleId?.let { gameStateRepository.clearGameState(it) }
-                // Navigate to leaderboard
-                navigator.navigateTo(Screen.Leaderboard(GameType.MINI_SUDOKU_6X6))
+                val result = submitResult(durationMs, state.movesCount)
+                result.fold(
+                    onSuccess = {
+                        puzzleId?.let { gameStateRepository.clearGameState(it) }
+                        // Navigate to leaderboard (loader will remain visible until leaderboard loads)
+                        navigator.navigateTo(Screen.Leaderboard(GameType.MINI_SUDOKU_6X6))
+                    },
+                    onFailure = { error ->
+                        // If submission fails, hide loader and show error
+                        _uiState.value = _uiState.value.copy(
+                            isSubmitting = false,
+                            errorMessage = "Failed to submit result: ${error.message ?: "Unknown error"}"
+                        )
+                    }
+                )
             }
         } else {
             _events.value = SudokuEvent.ValidationError("Solution is incorrect. Please check your answers.")
@@ -305,9 +320,10 @@ class SudokuViewModel(
         }
     }
 
-    private suspend fun submitResult(durationMs: Long, movesCount: Int) {
-        val user = authRepository.currentUser.value ?: return
-        val puzzleDto = puzzleRepository.getTodayPuzzle(GameType.MINI_SUDOKU_6X6).getOrNull() ?: return
+    private suspend fun submitResult(durationMs: Long, movesCount: Int): kotlin.Result<Unit> {
+        val user = authRepository.currentUser.value ?: return kotlin.Result.failure(Exception("User not authenticated"))
+        val puzzleDto = puzzleRepository.getTodayPuzzle(GameType.MINI_SUDOKU_6X6).getOrNull() 
+            ?: return kotlin.Result.failure(Exception("Puzzle not found"))
 
         val result = ResultDto(
             userId = user.uid,
@@ -318,8 +334,7 @@ class SudokuViewModel(
             movesCount = movesCount
         )
 
-        puzzleRepository.submitResult(result)
-
+        return puzzleRepository.submitResult(result)
     }
 
     fun onBackPress() {
