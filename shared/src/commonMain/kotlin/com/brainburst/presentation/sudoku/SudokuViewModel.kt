@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Clock
 
 data class SudokuUiState(
@@ -70,7 +72,6 @@ class SudokuViewModel(
     private var elapsedMillisWhenPaused: Long = 0L
     private var timerStartedAtMillis: Long = 0L
     private var isTimerRunning: Boolean = false
-    private var lastSaveTimeMillis: Long = 0L
 
     init {
         loadPuzzle()
@@ -186,12 +187,6 @@ class SudokuViewModel(
         }
 
         _uiState.value = _uiState.value.copy(elapsedTimeFormatted = formatted)
-
-        // Auto-save every 5 seconds to handle app being killed
-        if (now - lastSaveTimeMillis >= 5000) {
-            saveGameState()
-            lastSaveTimeMillis = now
-        }
     }
 
     private fun updateUiFromState() {
@@ -320,6 +315,44 @@ class SudokuViewModel(
         }
     }
 
+    /**
+     * Blocking version of saveGameState for use in lifecycle callbacks.
+     * Uses runBlocking to ensure the save completes before the process is killed.
+     * This is important on Android when the app is backgrounded or killed.
+     */
+    private fun saveGameStateBlocking() {
+        val state = currentState ?: return
+        val id = puzzleId ?: return
+
+        runBlocking {
+            try {
+                withTimeout(1000) { // 1 second timeout to prevent hanging
+                    // Calculate current total elapsed time
+                    val now = Clock.System.now().toEpochMilliseconds()
+                    val sessionElapsed = if (isTimerRunning) now - timerStartedAtMillis else 0L
+                    val totalElapsed = elapsedMillisWhenPaused + sessionElapsed
+
+                    val savedState = SavedGameState(
+                        puzzleId = id,
+                        gameType = GameType.MINI_SUDOKU_6X6,
+                        board = state.board,
+                        fixedCells = state.fixedCells.toSerializable(),
+                        startedAtMillis = state.startedAtMillis,
+                        movesCount = state.movesCount,
+                        elapsedMillisAtPause = totalElapsed,
+                        lastSavedAtMillis = now
+                    )
+
+                    gameStateRepository.saveGameState(savedState)
+                }
+            } catch (e: Exception) {
+                // Silently fail - if save doesn't complete, that's okay
+                // The user's progress might be lost, but we don't want to crash
+                // or hang the app shutdown process
+            }
+        }
+    }
+
     private suspend fun submitResult(durationMs: Long, movesCount: Int): kotlin.Result<Unit> {
         val user = authRepository.currentUser.value ?: return kotlin.Result.failure(Exception("User not authenticated"))
         val puzzleDto = puzzleRepository.getTodayPuzzle(GameType.MINI_SUDOKU_6X6).getOrNull() 
@@ -357,5 +390,16 @@ class SudokuViewModel(
 
     fun onScreenHidden() {
         pauseTimer()
+    }
+
+    /**
+     * Called when the screen is stopped (onPause on Android, viewDidDisappear on iOS).
+     * This saves the game state when the user leaves the screen.
+     * Uses blocking save to ensure state is persisted even when the app is killed.
+     */
+    fun onScreenStopped() {
+        pauseTimer() // This calls saveGameState() async
+        // Also call blocking version to ensure save completes before process is killed
+        saveGameStateBlocking()
     }
 }

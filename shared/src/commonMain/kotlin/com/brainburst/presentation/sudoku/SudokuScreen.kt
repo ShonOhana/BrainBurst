@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.brainburst.domain.game.Position
+import com.brainburst.platform.PlatformLifecycleHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,12 +25,14 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val event by viewModel.events.collectAsState()
     
-    // Lifecycle: Handle screen visibility
-    DisposableEffect(Unit) {
+    // Lifecycle: Handle screen visibility on start
+    LaunchedEffect(Unit) {
         viewModel.onScreenVisible()
-        onDispose {
-            viewModel.onScreenHidden()
-        }
+    }
+    
+    // Platform-specific lifecycle: onStop on Android, viewDidDisappear on iOS
+    PlatformLifecycleHandler {
+        viewModel.onScreenStopped()
     }
     
     // Handle events

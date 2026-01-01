@@ -85,6 +85,7 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.play.services.auth)
             implementation(libs.datastore.preferences.android)
+            implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
         }
         
         commonTest.dependencies {
