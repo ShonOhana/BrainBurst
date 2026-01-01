@@ -59,6 +59,31 @@ fun AuthScreen(viewModel: AuthViewModel) {
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Name Fields (only shown in sign-up mode)
+            if (uiState.isSignUpMode) {
+                OutlinedTextField(
+                    value = uiState.firstName,
+                    onValueChange = { viewModel.onFirstNameChanged(it) },
+                    label = { Text("First Name") },
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                OutlinedTextField(
+                    value = uiState.lastName,
+                    onValueChange = { viewModel.onLastNameChanged(it) },
+                    label = { Text("Last Name") },
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            
             // Password Field
             OutlinedTextField(
                 value = uiState.password,

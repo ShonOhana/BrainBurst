@@ -60,7 +60,7 @@ val appModule = module {
     single { Navigator() }
     
     // Repositories
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
     single<PuzzleRepository> { PuzzleRepositoryImpl(get(), get()) }
     single<GameStateRepository> { GameStateRepositoryImpl(get(), get()) }
     
@@ -72,7 +72,7 @@ val appModule = module {
     factory { AuthViewModel(get(), get(), get(), get()) }
     single { HomeViewModel(get(), get(), get(), get(), get()) }  // Single scope to persist cache across navigation
     factory { SudokuViewModel(get(), get(), get(), get(), get(), get()) }
-    factory { params -> LeaderboardViewModel(params.get(), get(), get(), get(), get()) }
+    factory { params -> LeaderboardViewModel(params.get(), get(), get(), get(), get(), get()) }
 }
 
 fun getAllModules() = listOf(appModule, getPlatformModule())

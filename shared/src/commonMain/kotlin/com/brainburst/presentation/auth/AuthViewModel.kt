@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 data class AuthUiState(
     val email: String = "",
     val password: String = "",
+    val firstName: String = "",
+    val lastName: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isSignUpMode: Boolean = false
@@ -35,6 +37,14 @@ class AuthViewModel(
         _uiState.value = _uiState.value.copy(password = password, errorMessage = null)
     }
     
+    fun onFirstNameChanged(firstName: String) {
+        _uiState.value = _uiState.value.copy(firstName = firstName, errorMessage = null)
+    }
+    
+    fun onLastNameChanged(lastName: String) {
+        _uiState.value = _uiState.value.copy(lastName = lastName, errorMessage = null)
+    }
+    
     fun toggleSignUpMode() {
         _uiState.value = _uiState.value.copy(
             isSignUpMode = !_uiState.value.isSignUpMode,
@@ -49,11 +59,24 @@ class AuthViewModel(
             return
         }
         
+        // For sign-up, require firstName and lastName
+        if (currentState.isSignUpMode) {
+            if (currentState.firstName.isBlank() || currentState.lastName.isBlank()) {
+                _uiState.value = currentState.copy(errorMessage = "Please enter your first and last name")
+                return
+            }
+        }
+        
         _uiState.value = currentState.copy(isLoading = true, errorMessage = null)
         
         viewModelScope.launch {
             val result = if (currentState.isSignUpMode) {
-                authRepository.signUpWithEmail(currentState.email, currentState.password)
+                authRepository.signUpWithEmail(
+                    currentState.email, 
+                    currentState.password,
+                    currentState.firstName,
+                    currentState.lastName
+                )
             } else {
                 authRepository.signInWithEmail(currentState.email, currentState.password)
             }

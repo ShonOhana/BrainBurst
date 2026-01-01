@@ -18,12 +18,17 @@ interface AuthRepository {
     /**
      * Create a new account with email and password
      */
-    suspend fun signUpWithEmail(email: String, password: String): Result<User>
+    suspend fun signUpWithEmail(email: String, password: String, firstName: String, lastName: String): Result<User>
     
     /**
      * Sign in with Google ID token
      */
     suspend fun signInWithGoogleToken(idToken: String): Result<User>
+    
+    /**
+     * Save user data to Firestore users collection
+     */
+    suspend fun saveUserToFirestore(user: User): Result<Unit>
     
     /**
      * Sign out the current user
