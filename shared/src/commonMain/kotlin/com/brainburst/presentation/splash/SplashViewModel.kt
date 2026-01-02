@@ -4,9 +4,11 @@ import com.brainburst.domain.repository.AuthRepository
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -25,7 +27,8 @@ class SplashViewModel(
     
     private fun checkAuthState() {
         viewModelScope.launch {
-            authRepository.currentUser.collect { user ->
+            authRepository.currentUser.collectLatest { user ->
+                delay(1000)
                 if (user != null) {
                     navigator.navigateTo(Screen.Home)
                     _isLoading.value = false
