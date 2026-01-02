@@ -48,6 +48,9 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.koin.android)
     implementation(libs.play.services.auth)
+    
+    // AdMob
+    implementation("com.google.android.gms:play-services-ads:23.0.0")
 }
 
 

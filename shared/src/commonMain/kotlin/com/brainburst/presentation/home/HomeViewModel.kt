@@ -1,6 +1,7 @@
 package com.brainburst.presentation.home
 
 import com.brainburst.domain.admin.AdminPuzzleUploader
+import com.brainburst.domain.ads.AdManager
 import com.brainburst.domain.model.GameType
 import com.brainburst.domain.model.User
 import com.brainburst.domain.repository.AuthRepository
@@ -29,7 +30,8 @@ class HomeViewModel(
     private val puzzleRepository: PuzzleRepository,
     private val navigator: Navigator,
     private val viewModelScope: CoroutineScope,
-    private val adminPuzzleUploader: AdminPuzzleUploader
+    private val adminPuzzleUploader: AdminPuzzleUploader,
+    private val adManager: AdManager
 ) {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -190,12 +192,20 @@ class HomeViewModel(
                 val gameState = _uiState.value.games.find { it.gameType == gameType }
                 when (gameState) {
                     is GameStateUI.Available -> {
-                        // User hasn't completed the puzzle - always let them play
-                        navigator.navigateTo(Screen.Sudoku)
+                        // User hasn't completed the puzzle - show ad then navigate
+                        viewModelScope.launch {
+//                            adManager.showInterstitialAd {
+                                navigator.navigateTo(Screen.Sudoku)
+//                            }
+                        }
                     }
                     is GameStateUI.Completed -> {
-                        // User has completed - show results
-                        navigator.navigateTo(Screen.Leaderboard(gameType))
+                        // User has completed - show ad then show results
+                        viewModelScope.launch {
+                            adManager.showInterstitialAd {
+                                navigator.navigateTo(Screen.Leaderboard(gameType))
+                            }
+                        }
                     }
                     else -> {
                         // Loading or Coming Soon - do nothing

@@ -86,6 +86,9 @@ kotlin {
             implementation(libs.play.services.auth)
             implementation(libs.datastore.preferences.android)
             implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+            
+            // AdMob for Android
+            implementation("com.google.android.gms:play-services-ads:23.0.0")
         }
         
         commonTest.dependencies {

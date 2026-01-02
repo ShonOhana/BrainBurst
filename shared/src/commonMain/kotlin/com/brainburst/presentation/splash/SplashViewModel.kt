@@ -25,21 +25,14 @@ class SplashViewModel(
     
     private fun checkAuthState() {
         viewModelScope.launch {
-            viewModelScope.launch {
-                // Skip the initial null value from StateFlow, wait for first real emission from Firebase
-                val user = authRepository.currentUser
-                    .drop(1)  // Skip the initial null value
-                    .first() // Wait for the first real emission
-
-                // Navigate based on actual auth state
+            authRepository.currentUser.collect { user ->
                 if (user != null) {
                     navigator.navigateTo(Screen.Home)
+                    _isLoading.value = false
                 } else {
                     navigator.navigateTo(Screen.Auth)
+                    _isLoading.value = false
                 }
-
-                // Hide loading after navigation
-                _isLoading.value = false
             }
         }
     }

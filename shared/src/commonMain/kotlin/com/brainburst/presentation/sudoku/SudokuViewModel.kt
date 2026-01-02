@@ -1,5 +1,6 @@
 package com.brainburst.presentation.sudoku
 
+import com.brainburst.domain.ads.AdManager
 import com.brainburst.domain.game.GameRegistry
 import com.brainburst.domain.game.Position
 import com.brainburst.domain.game.SudokuMove
@@ -54,7 +55,8 @@ class SudokuViewModel(
     private val authRepository: AuthRepository,
     private val gameStateRepository: GameStateRepository,
     private val navigator: Navigator,
-    private val viewModelScope: CoroutineScope
+    private val viewModelScope: CoroutineScope,
+    private val adManager: AdManager
 ) {
     private val _uiState = MutableStateFlow(SudokuUiState())
     val uiState: StateFlow<SudokuUiState> = _uiState.asStateFlow()
@@ -273,8 +275,10 @@ class SudokuViewModel(
                 result.fold(
                     onSuccess = {
                         puzzleId?.let { gameStateRepository.clearGameState(it) }
-                        // Navigate to leaderboard (loader will remain visible until leaderboard loads)
-                        navigator.navigateTo(Screen.Leaderboard(GameType.MINI_SUDOKU_6X6))
+                        // Show ad before navigating to leaderboard
+                        adManager.showInterstitialAd {
+                            navigator.navigateTo(Screen.Leaderboard(GameType.MINI_SUDOKU_6X6))
+                        }
                     },
                     onFailure = { error ->
                         // If submission fails, hide loader and show error

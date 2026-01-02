@@ -1,9 +1,11 @@
 package com.brainburst
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.brainburst.di.getAllModules
+import com.brainburst.domain.ads.AdManager
 import com.brainburst.presentation.auth.AuthScreen
 import com.brainburst.presentation.auth.AuthViewModel
 import com.brainburst.presentation.home.HomeScreen
@@ -37,6 +39,12 @@ fun App(koinModules: List<org.koin.core.module.Module> = getAllModules()) {
 private fun AppContent() {
     val navigator: Navigator = koinInject()
     val currentScreen by navigator.currentScreen.collectAsState()
+    
+    // Preload ads when app starts
+    val adManager: AdManager = koinInject()
+    LaunchedEffect(Unit) {
+        adManager.preloadInterstitialAd()
+    }
     
     when (currentScreen) {
         is Screen.Splash -> {
