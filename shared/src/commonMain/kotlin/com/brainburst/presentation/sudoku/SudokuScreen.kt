@@ -25,14 +25,22 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val event by viewModel.events.collectAsState()
     
-    // Lifecycle: Handle screen visibility on start
-    LaunchedEffect(Unit) {
-        viewModel.onScreenVisible()
-    }
+    // Lifecycle: Handle app background/foreground
+    PlatformLifecycleHandler(
+        onPause = {
+            viewModel.onAppPaused()
+        },
+        onResume = {
+            viewModel.onAppResumed()
+        }
+    )
     
-    // Platform-specific lifecycle: onStop on Android, viewDidDisappear on iOS
-    PlatformLifecycleHandler {
-        viewModel.onScreenStopped()
+    // Handle initial screen visibility - start timer when screen first appears
+    LaunchedEffect(Unit) {
+        // Start timer when screen first appears if puzzle is loaded
+        if (uiState.board.isNotEmpty()) {
+            viewModel.onAppResumed()
+        }
     }
     
     // Handle events

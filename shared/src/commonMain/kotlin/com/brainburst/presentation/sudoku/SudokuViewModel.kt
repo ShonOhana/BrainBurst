@@ -175,8 +175,15 @@ class SudokuViewModel(
     }
 
     private fun updateTimer() {
+        // Only update if timer has been initialized
+        if (timerStartedAtMillis == 0L && !isTimerRunning) {
+            // Timer hasn't started yet, show 00:00
+            _uiState.value = _uiState.value.copy(elapsedTimeFormatted = "00:00")
+            return
+        }
+        
         val now = Clock.System.now().toEpochMilliseconds()
-        val sessionElapsed = now - timerStartedAtMillis
+        val sessionElapsed = if (isTimerRunning) now - timerStartedAtMillis else 0L
         val totalElapsed = elapsedMillisWhenPaused + sessionElapsed
 
         val elapsedSeconds = totalElapsed / 1000
@@ -207,8 +214,10 @@ class SudokuViewModel(
             isComplete = state.isComplete()
         )
 
-        // Update timer display
-        updateTimer()
+        // Update timer display only if timer has been started
+        if (isTimerRunning || timerStartedAtMillis > 0L) {
+            updateTimer()
+        }
     }
 
     fun onCellClick(position: Position) {
@@ -394,6 +403,28 @@ class SudokuViewModel(
 
     fun onScreenHidden() {
         pauseTimer()
+    }
+
+    /**
+     * Called when the app goes to background (home button pressed, app switcher, etc.).
+     * This pauses the timer and saves state immediately.
+     */
+    fun onAppPaused() {
+        pauseTimer()
+        // Force save state when app goes to background
+        saveGameStateBlocking()
+    }
+
+    /**
+     * Called when the app comes back to foreground.
+     * This resumes the timer if the screen is still visible.
+     */
+    fun onAppResumed() {
+        // Only resume if we're still on the Sudoku screen and timer was running
+        // The screen visibility check ensures we don't resume if user navigated away
+        if (currentState != null && puzzleId != null) {
+            resumeTimer()
+        }
     }
 
     /**

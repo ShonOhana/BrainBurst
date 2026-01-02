@@ -8,21 +8,29 @@ import androidx.lifecycle.LifecycleEventObserver
 import org.koin.compose.koinInject
 
 /**
- * Android implementation: Observes Activity lifecycle and calls onStop
- * when the Activity's ON_PAUSE event occurs (more reliable than ON_STOP
- * when the app is killed or goes to background).
+ * Android implementation: Observes Activity lifecycle and calls onPause/onResume
+ * when the Activity's lifecycle events occur.
  */
 @Composable
-actual fun PlatformLifecycleHandler(onStop: () -> Unit) {
+actual fun PlatformLifecycleHandler(
+    onPause: () -> Unit,
+    onResume: () -> Unit
+) {
     // Get ComponentActivity from Koin
     val activity: ComponentActivity = koinInject()
     
     DisposableEffect(activity) {
         val observer = LifecycleEventObserver { _, event ->
-            // Use ON_PAUSE instead of ON_STOP because it's more reliably called
-            // when the app goes to background or is being killed
-            if (event == Lifecycle.Event.ON_PAUSE) {
-                onStop()
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // App is going to background
+                    onPause()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // App is coming to foreground
+                    onResume()
+                }
+                else -> {}
             }
         }
         
