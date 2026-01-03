@@ -83,61 +83,86 @@ class SudokuViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-            // Get today's puzzle
-            val result = puzzleRepository.getTodayPuzzle(GameType.MINI_SUDOKU_6X6)
-
-            result.fold(
-                onSuccess = { puzzleDto ->
-                    if (puzzleDto == null) {
+            // Get the latest available puzzle date (today's if exists, otherwise yesterday's)
+            // This handles the case where it's before 8 UTC and today's puzzle hasn't been generated yet
+            val latestDateResult = puzzleRepository.getLatestAvailablePuzzleDate(GameType.MINI_SUDOKU_6X6)
+            
+            latestDateResult.fold(
+                onSuccess = { latestDate ->
+                    if (latestDate == null) {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            errorMessage = "No puzzle available for today. Please try again later."
+                            errorMessage = "No puzzle available. Please check back later."
                         )
                         return@launch
                     }
+                    
+                    // Construct puzzleId from the latest available date
+                    val puzzleIdForDate = "${GameType.MINI_SUDOKU_6X6.name}_$latestDate"
+                    
+                    // Load the puzzle
+                    val puzzleResult = puzzleRepository.getPuzzle(puzzleIdForDate)
+                    
+                    puzzleResult.fold(
+                        onSuccess = { puzzleDto ->
+                            if (puzzleDto == null) {
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    errorMessage = "No puzzle available. Please check back later."
+                                )
+                                return@fold
+                            }
 
-                    // If this is a different puzzle than before, clear old state
-                    if (puzzleId != null && puzzleId != puzzleDto.puzzleId) {
-                        gameStateRepository.clearGameState(puzzleId!!)
-                    }
+                            // If this is a different puzzle than before, clear old state
+                            if (puzzleId != null && puzzleId != puzzleDto.puzzleId) {
+                                gameStateRepository.clearGameState(puzzleId!!)
+                            }
 
-                    puzzleId = puzzleDto.puzzleId
+                            puzzleId = puzzleDto.puzzleId
 
-                    // Decode payload
-                    val definition = gameRegistry.get<Sudoku6x6Payload, SudokuState>(GameType.MINI_SUDOKU_6X6)
-                    sudokuDefinition = definition as Sudoku6x6Definition
-                    payload = definition.decodePayload(puzzleDto.payload)
+                            // Decode payload
+                            val definition = gameRegistry.get<Sudoku6x6Payload, SudokuState>(GameType.MINI_SUDOKU_6X6)
+                            sudokuDefinition = definition as Sudoku6x6Definition
+                            payload = definition.decodePayload(puzzleDto.payload)
 
-                    // Try to restore saved state
-                    val savedState = gameStateRepository.loadGameState(puzzleDto.puzzleId)
+                            // Try to restore saved state
+                            val savedState = gameStateRepository.loadGameState(puzzleDto.puzzleId)
 
-                    if (savedState != null) {
-                        // Restore from saved state
-                        currentState = SudokuState(
-                            board = savedState.board,
-                            fixedCells = savedState.fixedCells.map { it.toPosition() }.toSet(),
-                            startedAtMillis = savedState.startedAtMillis,
-                            movesCount = savedState.movesCount
-                        )
-                        elapsedMillisWhenPaused = savedState.elapsedMillisAtPause
-                    } else {
-                        // Initialize fresh state
-                        currentState = definition.initialState(payload!!)
-                        elapsedMillisWhenPaused = 0L
-                    }
+                            if (savedState != null) {
+                                // Restore from saved state
+                                currentState = SudokuState(
+                                    board = savedState.board,
+                                    fixedCells = savedState.fixedCells.map { it.toPosition() }.toSet(),
+                                    startedAtMillis = savedState.startedAtMillis,
+                                    movesCount = savedState.movesCount
+                                )
+                                elapsedMillisWhenPaused = savedState.elapsedMillisAtPause
+                            } else {
+                                // Initialize fresh state
+                                currentState = definition.initialState(payload!!)
+                                elapsedMillisWhenPaused = 0L
+                            }
 
-                    // Update UI
-                    updateUiFromState()
+                            // Update UI
+                            updateUiFromState()
 
-                    // Start timer
-                    resumeTimer()
+                            // Start timer
+                            resumeTimer()
 
-                    _uiState.value = _uiState.value.copy(isLoading = false)
+                            _uiState.value = _uiState.value.copy(isLoading = false)
+                        },
+                        onFailure = { error ->
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                errorMessage = error.message ?: "Failed to load puzzle"
+                            )
+                        }
+                    )
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = error.message ?: "Failed to load puzzle"
+                        errorMessage = error.message ?: "Failed to load puzzle information"
                     )
                 }
             )
@@ -368,7 +393,14 @@ class SudokuViewModel(
 
     private suspend fun submitResult(durationMs: Long, movesCount: Int): kotlin.Result<Unit> {
         val user = authRepository.currentUser.value ?: return kotlin.Result.failure(Exception("User not authenticated"))
-        val puzzleDto = puzzleRepository.getTodayPuzzle(GameType.MINI_SUDOKU_6X6).getOrNull() 
+        
+        // Get the latest available puzzle date (today's if exists, otherwise yesterday's)
+        val latestDate = puzzleRepository.getLatestAvailablePuzzleDate(GameType.MINI_SUDOKU_6X6).getOrNull()
+            ?: return kotlin.Result.failure(Exception("No puzzle available"))
+        
+        // Construct puzzleId and get the puzzle
+        val puzzleIdForDate = "${GameType.MINI_SUDOKU_6X6.name}_$latestDate"
+        val puzzleDto = puzzleRepository.getPuzzle(puzzleIdForDate).getOrNull()
             ?: return kotlin.Result.failure(Exception("Puzzle not found"))
 
         val result = ResultDto(

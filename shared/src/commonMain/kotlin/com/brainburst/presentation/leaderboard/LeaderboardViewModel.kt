@@ -12,9 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 
 data class LeaderboardEntry(
     val rank: Int,
@@ -55,61 +52,85 @@ class LeaderboardViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             
-            val today = Clock.System.todayIn(TimeZone.UTC).toString()
-            val puzzleId = "${gameType.name}_$today"
-            val currentUserId = authRepository.currentUser.value?.uid
+            // Get the latest available puzzle date (today's if exists, otherwise yesterday's)
+            // This handles the case where it's before 8 UTC and today's puzzle hasn't been generated yet
+            val latestDateResult = puzzleRepository.getLatestAvailablePuzzleDate(gameType)
             
-            // Load results from Firestore
-            val result = puzzleRepository.getResultsForPuzzle(puzzleId, limit = 100)
-            
-            result.fold(
-                onSuccess = { results ->
-                    if (results.isEmpty()) {
+            latestDateResult.fold(
+                onSuccess = { latestDate ->
+                    // If no puzzle exists at all, show appropriate message
+                    if (latestDate == null) {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            date = today,
-                            errorMessage = "No one has completed today's puzzle yet. Be the first!"
+                            date = "",
+                            errorMessage = "No puzzle available yet. Please check back later."
                         )
                         return@fold
                     }
                     
-                    // Get unique user IDs
-                    val userIds = results.map { it.userId }.distinct()
+                    val puzzleId = "${gameType.name}_$latestDate"
+                    val currentUserId = authRepository.currentUser.value?.uid
                     
-                    // Fetch user data from Firestore
-                    val userDisplayNames = fetchUserDisplayNames(userIds)
+                    // Load results from Firestore for the latest available puzzle
+                    val result = puzzleRepository.getResultsForPuzzle(puzzleId, limit = 100)
                     
-                    // Convert to leaderboard entries
-                    val entries = results.mapIndexed { index, resultDto ->
-                        LeaderboardEntry(
-                            rank = index + 1,
-                            userId = resultDto.userId,
-                            displayName = userDisplayNames[resultDto.userId] 
-                                ?: "Player ${resultDto.userId.take(6)}",
-                            durationMs = resultDto.durationMs,
-                            formattedTime = formatDuration(resultDto.durationMs),
-                            movesCount = resultDto.movesCount,
-                            isCurrentUser = resultDto.userId == currentUserId
-                        )
-                    }
-                    
-                    // Find current user's entry
-                    val currentUserEntry = entries.find { it.isCurrentUser }
-                    val currentUserRank = currentUserEntry?.rank
-                    
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        date = today,
-                        entries = entries,
-                        currentUserEntry = currentUserEntry,
-                        currentUserRank = currentUserRank
+                    result.fold(
+                        onSuccess = { results ->
+                            if (results.isEmpty()) {
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    date = latestDate,
+                                    errorMessage = "No one has completed this puzzle yet. Be the first!"
+                                )
+                                return@fold
+                            }
+                            
+                            // Get unique user IDs
+                            val userIds = results.map { it.userId }.distinct()
+                            
+                            // Fetch user data from Firestore
+                            val userDisplayNames = fetchUserDisplayNames(userIds)
+                            
+                            // Convert to leaderboard entries
+                            val entries = results.mapIndexed { index, resultDto ->
+                                LeaderboardEntry(
+                                    rank = index + 1,
+                                    userId = resultDto.userId,
+                                    displayName = userDisplayNames[resultDto.userId] 
+                                        ?: "Player ${resultDto.userId.take(6)}",
+                                    durationMs = resultDto.durationMs,
+                                    formattedTime = formatDuration(resultDto.durationMs),
+                                    movesCount = resultDto.movesCount,
+                                    isCurrentUser = resultDto.userId == currentUserId
+                                )
+                            }
+                            
+                            // Find current user's entry
+                            val currentUserEntry = entries.find { it.isCurrentUser }
+                            val currentUserRank = currentUserEntry?.rank
+                            
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                date = latestDate,
+                                entries = entries,
+                                currentUserEntry = currentUserEntry,
+                                currentUserRank = currentUserRank
+                            )
+                        },
+                        onFailure = { error ->
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                date = latestDate,
+                                errorMessage = error.message ?: "Failed to load leaderboard"
+                            )
+                        }
                     )
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        date = today,
-                        errorMessage = error.message ?: "Failed to load leaderboard"
+                        date = "",
+                        errorMessage = error.message ?: "Failed to load puzzle information"
                     )
                 }
             )
