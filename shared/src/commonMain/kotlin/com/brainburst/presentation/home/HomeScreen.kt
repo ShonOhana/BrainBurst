@@ -261,10 +261,10 @@ fun GameCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Show icon for completed state
-                GameIcon(
-                    gameType = gameState.gameType,
-                    modifier = Modifier.size(48.dp)
-                )
+//                GameIcon(
+//                    gameType = gameState.gameType,
+//                    modifier = Modifier.size(48.dp)
+//                )
                 Spacer(modifier = Modifier.width(12.dp))
 
                 // Text content
