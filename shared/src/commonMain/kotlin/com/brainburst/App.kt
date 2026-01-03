@@ -1,9 +1,12 @@
 package com.brainburst
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import com.brainburst.di.getAllModules
 import com.brainburst.domain.ads.AdManager
 import com.brainburst.presentation.auth.AuthScreen
@@ -29,8 +32,10 @@ fun App(koinModules: List<org.koin.core.module.Module> = getAllModules()) {
     KoinApplication(application = {
         modules(koinModules)
     }) {
-        BrainBurstTheme {
-            AppContent()
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            BrainBurstTheme {
+                AppContent()
+            }
         }
     }
 }

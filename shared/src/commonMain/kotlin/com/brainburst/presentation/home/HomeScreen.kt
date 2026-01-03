@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -26,12 +28,15 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,6 +53,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = {
@@ -85,7 +91,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    containerColor = Color.White,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
@@ -132,9 +138,22 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Gradient colors for Available state (only for SUDOKU)
+            val gradientPurple = Color(0xFF9810FA)
+            val gradientBlue = Color(0xFF155DFC)
+            // Use large rounded corners for SUDOKU (both Available and Completed states)
+            val cardShape = MaterialTheme.shapes.extraLarge
+
+            val m = Modifier.background(
+            brush = Brush.horizontalGradient(
+                colors = listOf(gradientPurple, gradientBlue)
+            ),
+            shape = cardShape
+            )
             // Game cards
             uiState.games.forEach { gameState ->
                 GameCard(
+                    modifier = m,
                     gameState = gameState,
                     onClick = { viewModel.onGameClick(gameState.gameType) }
                 )
@@ -202,6 +221,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
 @Composable
 fun GameCard(
+    modifier: Modifier,
     gameState: GameStateUI,
     onClick: () -> Unit
 ) {
@@ -210,26 +230,42 @@ fun GameCard(
     // Custom colors for completed state
     val completedCardBackground = Color(0xFF2D2A34)
     val completedCardBorder = Color(0xFF884CE9)
-    val leaderboardButtonColor = Color(0xFF884CE9)
+    val leaderboardButtonColor = Color.White
+
+    // Determine if this is a SUDOKU game that should have gradient
+    val isSudokuGame = gameState.gameType == GameType.MINI_SUDOKU_6X6
+    val shouldUseGradient = isSudokuGame && (gameState is GameStateUI.Available || gameState is GameStateUI.Completed)
 
     val cardColor = when (gameState) {
-        is GameStateUI.Available -> MaterialTheme.colorScheme.primaryContainer
-        is GameStateUI.Completed -> completedCardBackground
-        is GameStateUI.ComingSoon -> MaterialTheme.colorScheme.surfaceVariant
-        is GameStateUI.Loading -> MaterialTheme.colorScheme.surface
+        is GameStateUI.Available -> {
+            if (isSudokuGame) Color.Transparent // Will use gradient instead
+            else Color.White // White background for ZIP and TANGO
+        }
+        is GameStateUI.Completed -> {
+            if (isSudokuGame) Color.Transparent // Will use gradient instead
+            else Color.White // White background for ZIP and TANGO
+        }
+        is GameStateUI.ComingSoon -> Color.White
+        is GameStateUI.Loading -> Color.White
     }
     val textColor = when (gameState) {
-        is GameStateUI.Available -> MaterialTheme.colorScheme.onPrimaryContainer
-        is GameStateUI.Completed -> Color(0xFFE0D8E8) // Light pink/lavender for completed
+        is GameStateUI.Available -> {
+            if (isSudokuGame) Color.White // White text for gradient background
+            else Color.Black // Black text for white background
+        }
+        is GameStateUI.Completed -> {
+            if (isSudokuGame) Color.White // White text for gradient background
+            else Color.Black // Black text for white background
+        }
         is GameStateUI.ComingSoon -> MaterialTheme.colorScheme.onSurfaceVariant
         is GameStateUI.Loading -> MaterialTheme.colorScheme.onSurface
     }
 
-    // Add border for completed state
+    // Add border for completed state (only for non-SUDOKU games)
     val cardModifier = Modifier
         .fillMaxWidth()
         .then(
-            if (gameState is GameStateUI.Completed) {
+            if (gameState is GameStateUI.Completed && !isSudokuGame) {
                 Modifier.border(1.dp, completedCardBorder, MaterialTheme.shapes.medium)
             } else {
                 Modifier
@@ -240,177 +276,210 @@ fun GameCard(
             else Modifier
         )
 
+    // Use large rounded corners for SUDOKU (both Available and Completed states)
+    val cardShape = if (shouldUseGradient) {
+        MaterialTheme.shapes.extraLarge
+    } else {
+        MaterialTheme.shapes.medium
+    }
+
     Card(
         modifier = cardModifier,
-        colors = CardDefaults.cardColors(
-            containerColor = cardColor
-        )
+        shape = cardShape,
+        colors = if (shouldUseGradient) {
+            CardDefaults.cardColors(containerColor = Color.Transparent)
+        } else {
+            CardDefaults.cardColors(containerColor = cardColor)
+        }
     ) {
-        // Card content - vertically centered
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = if (shouldUseGradient) modifier.fillMaxWidth().padding(vertical = 12.dp) else Modifier.fillMaxWidth()
         ) {
-            // Left side: Icon and text
+            // Card content - vertically centered
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Show icon for completed state
-//                GameIcon(
-//                    gameType = gameState.gameType,
-//                    modifier = Modifier.size(48.dp)
-//                )
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // Text content
-                Column(
-                    verticalArrangement = Arrangement.Center
+                // Left side: Icon and text
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Title
-                    Text(
-                        text = gameState.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor
-                    )
-
-                    // Date (only for Available state)
-                    if (gameState is GameStateUI.Available && gameState.formattedDate.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = gameState.formattedDate,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = textColor.copy(alpha = 0.8f)
-                        )
-                    }
-                }
-            }
-
-            // Right side: Buttons - take up right half of card
-            when (gameState) {
-                is GameStateUI.Available -> {
-                    OutlinedButton(
-                        onClick = onClick,
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Play Now")
-                        }
-                    }
-                }
-
-                is GameStateUI.Completed -> {
-                    // Calculate and display time until next 8 UTC
-                    var timeUntil8UTC by remember { mutableStateOf(calculateTimeUntil8UTC()) }
-
-                    // Update every minute
-                    LaunchedEffect(Unit) {
-                        while (true) {
-                            delay(60_000) // Update every minute
-                            timeUntil8UTC = calculateTimeUntil8UTC()
-                        }
-                    }
-
-                    // Two stacked buttons for completed state - right half of card
+                    // Text content
                     Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalAlignment = Alignment.End
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        // Top button: Time until next puzzle (disabled)
-                        Button(
-                            onClick = { /* Disabled */ },
-                            modifier = Modifier
-                                .height(36.dp)
-                                .fillMaxWidth(),
-                            enabled = false,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF5C5C5C), // Dark gray
-                                contentColor = Color.White,
-                                disabledContainerColor = Color(0xFF5C5C5C),
-                                disabledContentColor = Color.White.copy(alpha = 0.6f)
+                        if (gameState is GameStateUI.Available && isSudokuGame) {
+                            // For Available SUDOKU state, split title into three lines: "Mini", "Sudoku", "6x6"
+                            val titleParts = gameState.title.split(" ")
+                            Text(
+                                text = titleParts.getOrElse(0) { "" },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor
                             )
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.Start,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = timeUntil8UTC,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                            Text(
+                                text = titleParts.getOrElse(1) { "" },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor
+                            )
+                            Text(
+                                text = titleParts.getOrElse(2) { "" }.replace("×", "x"),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor
+                            )
+                        } else {
+                            // Title for other states or non-SUDOKU games
+                            Text(
+                                modifier = if (shouldUseGradient) Modifier else Modifier.alpha(0.5f),
+                                text = gameState.title,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor
+                            )
                         }
 
-                        // Bottom button: Leaderboard - same size as top button
+                        // Date (only for Available state - but we're not showing it in the new design)
+                        // Date removed for Available state to match design
+                    }
+                }
+
+                // Right side: Buttons - take up right half of card
+                when (gameState) {
+                    is GameStateUI.Available -> {
+                        // Pill-shaped button with light gray background and black text
                         Button(
                             onClick = onClick,
                             modifier = Modifier
-                                .height(36.dp)
-                                .fillMaxWidth(),
+                                .height(40.dp)
+                                .widthIn(min = 120.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = leaderboardButtonColor,
-                                contentColor = Color.White
-                            )
+                                containerColor = Color(0xFFE8E8E8), // Light gray/off-white
+                                contentColor = Color.Black
+                            ),
+                            shape = MaterialTheme.shapes.extraLarge // Pill shape
                         ) {
                             Row(
-                                horizontalArrangement = Arrangement.Start,
+                                horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Email,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = Color(0xFF5E35B1) // Dark purple for icon
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "LeaderBoard",
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    text = "Play now",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = Color.Black
                                 )
                             }
                         }
                     }
-                }
 
-                is GameStateUI.ComingSoon -> {
-                    OutlinedButton(
-                        onClick = {},
-                        modifier = Modifier.height(36.dp),
-                        enabled = false
-                    ) {
-                        Text("Coming Soon")
+                    is GameStateUI.Completed -> {
+                        // Calculate and display time until next 8 UTC
+                        var timeUntil8UTC by remember { mutableStateOf(calculateTimeUntil8UTC()) }
+
+                        // Update every minute
+                        LaunchedEffect(Unit) {
+                            while (true) {
+                                delay(60_000) // Update every minute
+                                timeUntil8UTC = calculateTimeUntil8UTC()
+                            }
+                        }
+
+                        // Two stacked buttons for completed state - right half of card
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            // Top button: Time until next puzzle (disabled)
+                            Button(
+                                onClick = { /* Disabled */ },
+                                modifier = Modifier
+                                    .height(51.dp)
+                                    .fillMaxWidth(),
+                                enabled = false,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF5C5C5C), // Dark gray
+                                    contentColor = Color.Black,
+                                    disabledContainerColor = Color.White.copy(alpha = 0.6f),
+                                    disabledContentColor = Color.Black
+                                )
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        modifier = Modifier.alpha(0.3f),
+                                        text = timeUntil8UTC,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.width(14.dp))
+
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(30.dp).alpha(0.3f)
+                                    )
+                                }
+                            }
+
+                            // Bottom button: Leaderboard - same size as top button
+                            Button(
+                                onClick = onClick,
+                                modifier = Modifier
+                                    .height(51.dp)
+                                    .fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = leaderboardButtonColor,
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "LeaderBoard",
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
                     }
-                }
 
-                is GameStateUI.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
+                    is GameStateUI.ComingSoon -> {
+                        OutlinedButton(
+                            onClick = {},
+                            modifier = Modifier.height(36.dp),
+                            enabled = false
+                        ) {
+                            Text("Coming Soon")
+                        }
+                    }
+
+                    is GameStateUI.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
                 }
             }
         }
