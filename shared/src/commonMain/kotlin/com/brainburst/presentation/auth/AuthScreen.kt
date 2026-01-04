@@ -1,6 +1,8 @@
 package com.brainburst.presentation.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -8,92 +10,184 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(viewModel: AuthViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = androidx.compose.ui.graphics.Color.Transparent
-    ) {
+    Scaffold(
+        containerColor = Color.Transparent
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(paddingValues)
+                .padding(horizontal = 24.dp)
+                .padding(top = 80.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-            // Title
-            Text(
-                text = "BrainBurst 🧠",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+            // App Icon (3x3 grid)
+            AppIcon()
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // BrainBurst Title with Gradient
+            GradientText(
+                text = "BrainBurst",
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            Text(
-                text = if (uiState.isSignUpMode) "Create Account" else "Welcome Back",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            // Welcome Back text (only in sign-in mode)
+            if (!uiState.isSignUpMode) {
+                Text(
+                    text = "Welcome Back!",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFF666666),
+                    fontSize = 16.sp
+                )
+            }
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             
-            // Email Field
-            OutlinedTextField(
+            // Username/Email Field
+            TextField(
                 value = uiState.email,
                 onValueChange = { viewModel.onEmailChanged(it) },
-                label = { Text("Email") },
+                placeholder = { 
+                    Text(
+                        "Username",
+                        color = Color(0xFF999999)
+                    ) 
+                },
                 enabled = !uiState.isLoading,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    disabledContainerColor = Color.White,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 16.sp)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
             // Name Fields (only shown in sign-up mode)
             if (uiState.isSignUpMode) {
-                OutlinedTextField(
+                TextField(
                     value = uiState.firstName,
                     onValueChange = { viewModel.onFirstNameChanged(it) },
-                    label = { Text("First Name") },
+                    placeholder = { 
+                        Text(
+                            "First Name",
+                            color = Color(0xFF999999)
+                        ) 
+                    },
                     enabled = !uiState.isLoading,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        disabledContainerColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 16.sp)
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                OutlinedTextField(
+                TextField(
                     value = uiState.lastName,
                     onValueChange = { viewModel.onLastNameChanged(it) },
-                    label = { Text("Last Name") },
+                    placeholder = { 
+                        Text(
+                            "Last Name",
+                            color = Color(0xFF999999)
+                        ) 
+                    },
                     enabled = !uiState.isLoading,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        disabledContainerColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 16.sp)
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
             }
             
             // Password Field
-            OutlinedTextField(
+            TextField(
                 value = uiState.password,
                 onValueChange = { viewModel.onPasswordChanged(it) },
-                label = { Text("Password") },
+                placeholder = { 
+                    Text(
+                        "Password",
+                        color = Color(0xFF999999)
+                    ) 
+                },
                 enabled = !uiState.isLoading,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    disabledContainerColor = Color.White,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 16.sp)
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -110,70 +204,305 @@ fun AuthScreen(viewModel: AuthViewModel) {
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Sign In/Up Button
-            Button(
+            // Start Playing Button with Gradient
+            GradientButton(
+                text = "Start Playing",
                 onClick = { viewModel.onSignInClick() },
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(
-                        text = if (uiState.isSignUpMode) "Sign Up" else "Sign In",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-            }
+                    .height(56.dp),
+                isLoading = uiState.isLoading
+            )
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Toggle Sign Up/In
-            TextButton(
+            // Create Account Button
+            Button(
                 onClick = { viewModel.toggleSignUpMode() },
-                enabled = !uiState.isLoading
+                enabled = !uiState.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .shadow(2.dp, RoundedCornerShape(12.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = if (uiState.isSignUpMode) 
-                        "Already have an account? Sign In" 
-                    else 
-                        "Don't have an account? Sign Up"
+                    text = "Create Account",
+                    color = Color(0xFF333333),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
-            // Divider
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Divider(modifier = Modifier.weight(1f))
-                Text(
-                    text = "OR",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Divider(modifier = Modifier.weight(1f))
-            }
+            // Or separator
+            Text(
+                text = "Or",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF999999),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
-            // Google Sign In Button
-            OutlinedButton(
+            // Continue With Google Button
+            Button(
                 onClick = { viewModel.onGoogleSignInClick() },
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(56.dp)
+                    .shadow(2.dp, RoundedCornerShape(12.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Continue with Google")
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Google Logo (simplified - using colored circles)
+                    GoogleLogo()
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Continue With Google",
+                        color = Color(0xFF333333),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AppIcon(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(80.dp)
+            .shadow(4.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        // 3x3 grid of purple squares
+        Column(
+            modifier = Modifier.size(48.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF6750A4))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GradientText(
+    text: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier
+) {
+    // Split text and apply gradient colors
+    Row(modifier = modifier) {
+        Text(
+            text = "Brain",
+            style = style,
+            color = Color(0xFF6750A4) // Purple
+        )
+        Text(
+            text = "Burst",
+            style = style,
+            color = Color(0xFF4285F4) // Blue
+        )
+    }
+}
+
+@Composable
+fun GradientButton(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
+) {
+    val gradientColors = listOf(
+        Color(0xFF6750A4), // Purple
+        Color(0xFF4285F4)  // Blue
+    )
+    
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.horizontalGradient(
+                    colors = gradientColors
+                )
+            )
+            .then(
+                if (!enabled) {
+                    Modifier.alpha(0.6f)
+                } else {
+                    Modifier
+                }
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.material3.Button(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.fillMaxSize(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
+            ),
+            shape = RoundedCornerShape(12.dp),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White
+                )
+            } else {
+                Text(
+                    text = text,
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GoogleLogo(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.size(20.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // Simplified Google logo using colored circles in a 2x2 grid
+        // G logo colors: Red, Yellow, Green, Blue
+        Column(
+            modifier = Modifier.size(20.dp),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                // Red
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFFEA4335))
+                )
+                // Yellow
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFFFBBC05))
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                // Green
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFF34A853))
+                )
+                // Blue
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFF4285F4))
+                )
             }
         }
     }
