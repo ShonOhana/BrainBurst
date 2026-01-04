@@ -45,6 +45,7 @@ import brainburst.shared.generated.resources.sudoku_icon
 import brainburst.shared.generated.resources.tango_icon
 import brainburst.shared.generated.resources.zip_icon
 import com.brainburst.domain.model.GameType
+import com.brainburst.platform.isAndroid
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -309,6 +310,14 @@ fun GameCard(
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Add GameIcon on Android only
+                    if (isAndroid) {
+                        GameIcon(
+                            gameType = gameState.gameType,
+                            modifier = Modifier.padding(end = 12.dp)
+                        )
+                    }
+                    
                     // Text content
                     Column(
                         verticalArrangement = Arrangement.Center
@@ -425,9 +434,9 @@ fun GameCard(
                                     disabledContentColor = Color.Black
                                 )
                             ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         modifier = Modifier.alpha(0.3f),
@@ -435,12 +444,14 @@ fun GameCard(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    Spacer(modifier = Modifier.width(14.dp))
-
                                     Icon(
                                         imageVector = Icons.Default.PlayArrow,
                                         contentDescription = null,
-                                        modifier = Modifier.size(30.dp).alpha(0.3f)
+                                        modifier = Modifier
+                                            .size(30.dp)
+                                            .alpha(0.3f)
+                                            .align(Alignment.CenterEnd),
+                                        tint = Color.Unspecified
                                     )
                                 }
                             }
