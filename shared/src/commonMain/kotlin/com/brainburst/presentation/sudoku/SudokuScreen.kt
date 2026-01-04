@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -12,10 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.brainburst.domain.game.Position
 import com.brainburst.platform.PlatformLifecycleHandler
 
@@ -58,51 +62,22 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
         }
     }
     
-    Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "Mini Sudoku 6×6",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+    // Purple gradient background
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFE8D5FF),
+                        Color(0xFFD8BBFF)
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { viewModel.onBackPress() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
-        },
-        snackbarHost = {
-            if (event is SudokuEvent.ValidationError) {
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    action = {
-                        TextButton(onClick = { viewModel.clearEvent() }) {
-                            Text("OK")
-                        }
-                    }
-                ) {
-                    Text((event as SudokuEvent.ValidationError).message)
-                }
-            }
-        }
-    ) { paddingValues ->
+    ) {
         if (uiState.isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
@@ -111,7 +86,6 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -129,117 +103,197 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                 }
             }
         } else {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                // Back button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
                 ) {
-                    // Timer and info row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Today's Puzzle",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                    IconButton(onClick = { viewModel.onBackPress() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF6200EA)
                         )
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "⏱️ ${uiState.elapsedTimeFormatted}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(
-                                text = "Moves: ${uiState.movesCount}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     }
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // Sudoku board
-                    SudokuBoard(
-                        board = uiState.board,
-                        fixedCells = uiState.fixedCells,
-                        selectedPosition = uiState.selectedPosition,
-                        invalidPositions = uiState.invalidPositions,
-                        onCellClick = { viewModel.onCellClick(it) }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // Number pad
-                    NumberPad(
-                        onNumberClick = { viewModel.onNumberPress(it) },
-                        onEraseClick = { viewModel.onErasePress() }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Submit button
-                    Button(
-                        onClick = { viewModel.onSubmit() },
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Title
+                Text(
+                    text = "Mini Sudoku",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF6200EA)
+                )
+                
+                // Subtitle
+                Text(
+                    text = "6×6 Brain Puzzle",
+                    fontSize = 16.sp,
+                    color = Color(0xFF6200EA).copy(alpha = 0.7f)
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Stats Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        enabled = uiState.isComplete && !uiState.isSubmitting
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (uiState.isSubmitting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Submitting...")
-                        } else {
+                        // Time
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // Clock icon using Unicode
                             Text(
-                                text = if (uiState.isComplete) "Submit Solution" else "Fill all cells to submit",
-                                style = MaterialTheme.typography.titleMedium
+                                text = "🕐",
+                                fontSize = 28.sp
                             )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Time",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
+                                Text(
+                                    text = uiState.elapsedTimeFormatted,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1A1A1A)
+                                )
+                            }
+                        }
+                        
+                        // Divider
+                        Box(
+                            modifier = Modifier
+                                .height(50.dp)
+                                .width(1.dp)
+                                .background(Color(0xFFE0E0E0))
+                        )
+                        
+                        // Moves
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "#",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF6200EA)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Moves",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
+                                Text(
+                                    text = uiState.movesCount.toString(),
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1A1A1A)
+                                )
+                            }
                         }
                     }
                 }
                 
-                // Full-screen loader overlay when submitting
-                if (uiState.isSubmitting) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
-                        contentAlignment = Alignment.Center
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Sudoku board
+                SudokuBoard(
+                    board = uiState.board,
+                    fixedCells = uiState.fixedCells,
+                    selectedPosition = uiState.selectedPosition,
+                    invalidPositions = uiState.invalidPositions,
+                    onCellClick = { viewModel.onCellClick(it) }
+                )
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // Number pad
+                NumberPad(
+                    onNumberClick = { viewModel.onNumberPress(it) },
+                    onEraseClick = { viewModel.onErasePress() },
+                    onSubmit = { viewModel.onSubmit() },
+                    isComplete = uiState.isComplete
+                )
+            }
+            
+            // Full-screen loader overlay when submitting
+            if (uiState.isSubmitting) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White.copy(alpha = 0.9f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(64.dp),
-                                strokeWidth = 4.dp
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Submitting your result...",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Loading leaderboard",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(64.dp),
+                            strokeWidth = 4.dp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Submitting your result...",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Loading leaderboard",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+            
+            // Snackbar for errors
+            if (event is SudokuEvent.ValidationError) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Snackbar(
+                        action = {
+                            TextButton(onClick = { viewModel.clearEvent() }) {
+                                Text("OK")
+                            }
                         }
+                    ) {
+                        Text((event as SudokuEvent.ValidationError).message)
                     }
                 }
             }
@@ -258,73 +312,90 @@ fun SudokuBoard(
     if (board.isEmpty()) return
     
     val size = board.size
-    val cellSize = 48.dp
+    val cellSize = 54.dp
     
-    Column(
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.outline)
-            .border(2.dp, MaterialTheme.colorScheme.outline)
+    Card(
+        modifier = Modifier.wrapContentSize(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        for (row in 0 until size) {
-            Row {
-                for (col in 0 until size) {
-                    val position = Position(row, col)
-                    val value = board[row][col]
-                    val isFixed = position in fixedCells
-                    val isSelected = position == selectedPosition
-                    val isInvalid = position in invalidPositions
-                    
-                    // Determine border widths for block highlighting
-                    val topBorder = if (row % 2 == 0 && row != 0) 2.dp else 1.dp
-                    val leftBorder = if (col % 3 == 0 && col != 0) 2.dp else 1.dp
-                    
-                    Box(
-                        modifier = Modifier
-                            .size(cellSize)
-                            .background(
-                                when {
-                                    isInvalid -> MaterialTheme.colorScheme.errorContainer
-                                    isSelected -> MaterialTheme.colorScheme.primaryContainer
-                                    isFixed -> MaterialTheme.colorScheme.surfaceVariant
-                                    else -> MaterialTheme.colorScheme.surface
-                                }
-                            )
-                            .border(
-                                width = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
-                            .then(
-                                if (row % 2 == 0 && row != 0) {
-                                    Modifier.border(
-                                        width = topBorder,
-                                        color = MaterialTheme.colorScheme.outline
+        Box(
+            modifier = Modifier
+                .padding(12.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .border(3.dp, Color(0xFF1A1A1A), RoundedCornerShape(8.dp))
+        ) {
+            Column {
+                for (row in 0 until size) {
+                    Row {
+                        for (col in 0 until size) {
+                            val position = Position(row, col)
+                            val value = board[row][col]
+                            val isFixed = position in fixedCells
+                            val isSelected = position == selectedPosition
+                            val isInvalid = position in invalidPositions
+                            
+                            Box(
+                                modifier = Modifier
+                                    .size(cellSize)
+                                    .background(
+                                        when {
+                                            isInvalid -> Color(0xFFFFCDD2)
+                                            isSelected -> Color(0xFFBBDEFB)
+                                            else -> Color.White
+                                        }
                                     )
-                                } else Modifier
-                            )
-                            .then(
-                                if (col % 3 == 0 && col != 0) {
-                                    Modifier.border(
-                                        width = leftBorder,
-                                        color = MaterialTheme.colorScheme.outline
+                                    .then(
+                                        // Right border
+                                        if (col < size - 1) {
+                                            if (col % 3 == 2) {
+                                                Modifier.border(
+                                                    width = 2.dp,
+                                                    color = Color(0xFF757575)
+                                                )
+                                            } else {
+                                                Modifier.border(
+                                                    width = 1.dp,
+                                                    color = Color(0xFFE0E0E0)
+                                                )
+                                            }
+                                        } else Modifier
                                     )
-                                } else Modifier
-                            )
-                            .clickable(enabled = !isFixed) {
-                                onCellClick(position)
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (value != 0) {
-                            Text(
-                                text = value.toString(),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = if (isFixed) FontWeight.Bold else FontWeight.Normal,
-                                color = when {
-                                    isInvalid -> MaterialTheme.colorScheme.error
-                                    isFixed -> MaterialTheme.colorScheme.onSurfaceVariant
-                                    else -> MaterialTheme.colorScheme.primary
+                                    .then(
+                                        // Bottom border
+                                        if (row < size - 1) {
+                                            if (row % 2 == 1) {
+                                                Modifier.border(
+                                                    width = 2.dp,
+                                                    color = Color(0xFF757575)
+                                                )
+                                            } else {
+                                                Modifier.border(
+                                                    width = 1.dp,
+                                                    color = Color(0xFFE0E0E0)
+                                                )
+                                            }
+                                        } else Modifier
+                                    )
+                                    .clickable(enabled = !isFixed) {
+                                        onCellClick(position)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (value != 0) {
+                                    Text(
+                                        text = value.toString(),
+                                        fontSize = 28.sp,
+                                        fontWeight = if (isFixed) FontWeight.Bold else FontWeight.Normal,
+                                        color = when {
+                                            isInvalid -> Color(0xFFD32F2F)
+                                            isFixed -> Color(0xFF1A1A1A)
+                                            else -> Color(0xFF6200EA)
+                                        }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -336,57 +407,110 @@ fun SudokuBoard(
 @Composable
 fun NumberPad(
     onNumberClick: (Int) -> Unit,
-    onEraseClick: () -> Unit
+    onEraseClick: () -> Unit,
+    onSubmit: () -> Unit,
+    isComplete: Boolean
 ) {
-    Column {
-        // Numbers 1-6
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // First row: 1-3
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            for (number in 1..6) {
+            for (number in 1..3) {
                 Button(
                     onClick = { onNumberClick(number) },
                     modifier = Modifier
                         .weight(1f)
-                        .height(56.dp),
+                        .height(64.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = number.toString(),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(8.dp))
+        // Second row: 4-6
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            for (number in 4..6) {
+                Button(
+                    onClick = { onNumberClick(number) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(64.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = number.toString(),
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
         
-        // Erase button
+        // Clear button
         Button(
             onClick = onEraseClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(64.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-            )
+                containerColor = Color.White,
+                contentColor = Color.Black
+            ),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Erase",
-                modifier = Modifier.size(24.dp)
+                contentDescription = "Clear",
+                modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Erase",
-                style = MaterialTheme.typography.titleMedium
+                text = "Clear",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
             )
+        }
+        
+        // Submit button (when puzzle is complete)
+        if (isComplete) {
+            Button(
+                onClick = onSubmit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6200EA),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Submit Solution",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
