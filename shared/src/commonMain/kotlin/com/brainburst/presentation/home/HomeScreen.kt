@@ -345,8 +345,15 @@ fun GameCard(
                             )
                         }
 
-                        // Date (only for Available state - but we're not showing it in the new design)
-                        // Date removed for Available state to match design
+                        // Date (for Available and Completed states)
+                        if (gameState is GameStateUI.Available && gameState.formattedDate.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = gameState.formattedDate,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = textColor.copy(alpha = 0.8f)
+                            )
+                        }
                     }
                 }
 
