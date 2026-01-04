@@ -1,5 +1,6 @@
 package com.brainburst.presentation.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,12 +23,17 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import brainburst.shared.generated.resources.Res
+import brainburst.shared.generated.resources.google
+import brainburst.shared.generated.resources.sudoku_icon
+import com.brainburst.platform.isAndroid
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(viewModel: AuthViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     Scaffold(
         containerColor = Color.Transparent
     ) { paddingValues ->
@@ -42,9 +48,9 @@ fun AuthScreen(viewModel: AuthViewModel) {
         ) {
             // App Icon (3x3 grid)
             AppIcon()
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // BrainBurst Title with Gradient
             GradientText(
                 text = "BrainBurst",
@@ -53,11 +59,18 @@ fun AuthScreen(viewModel: AuthViewModel) {
                     fontWeight = FontWeight.Bold
                 )
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
-            // Welcome Back text (only in sign-in mode)
-            if (!uiState.isSignUpMode) {
+
+            // Subtitle text
+            if (uiState.isSignUpMode) {
+                Text(
+                    text = "Create account",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFF666666),
+                    fontSize = 16.sp
+                )
+            } else {
                 Text(
                     text = "Welcome Back!",
                     style = MaterialTheme.typography.bodyLarge,
@@ -65,50 +78,20 @@ fun AuthScreen(viewModel: AuthViewModel) {
                     fontSize = 16.sp
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(40.dp))
-            
-            // Username/Email Field
-            TextField(
-                value = uiState.email,
-                onValueChange = { viewModel.onEmailChanged(it) },
-                placeholder = { 
-                    Text(
-                        "Username",
-                        color = Color(0xFF999999)
-                    ) 
-                },
-                enabled = !uiState.isLoading,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    disabledContainerColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
-                ),
-                singleLine = true,
-                textStyle = TextStyle(fontSize = 16.sp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Name Fields (only shown in sign-up mode)
+
+            // Fields in sign-up mode: First Name, Last Name, Email Address, Password
             if (uiState.isSignUpMode) {
+                // First Name Field
                 TextField(
                     value = uiState.firstName,
                     onValueChange = { viewModel.onFirstNameChanged(it) },
-                    placeholder = { 
+                    placeholder = {
                         Text(
                             "First Name",
                             color = Color(0xFF999999)
-                        ) 
+                        )
                     },
                     enabled = !uiState.isLoading,
                     modifier = Modifier
@@ -127,17 +110,18 @@ fun AuthScreen(viewModel: AuthViewModel) {
                     singleLine = true,
                     textStyle = TextStyle(fontSize = 16.sp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
+                // Last Name Field
                 TextField(
                     value = uiState.lastName,
                     onValueChange = { viewModel.onLastNameChanged(it) },
-                    placeholder = { 
+                    placeholder = {
                         Text(
                             "Last Name",
                             color = Color(0xFF999999)
-                        ) 
+                        )
                     },
                     enabled = !uiState.isLoading,
                     modifier = Modifier
@@ -156,19 +140,81 @@ fun AuthScreen(viewModel: AuthViewModel) {
                     singleLine = true,
                     textStyle = TextStyle(fontSize = 16.sp)
                 )
-                
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Email Address Field (sign-up mode)
+                TextField(
+                    value = uiState.email,
+                    onValueChange = { viewModel.onEmailChanged(it) },
+                    placeholder = {
+                        Text(
+                            "Email Address",
+                            color = Color(0xFF999999)
+                        )
+                    },
+                    enabled = !uiState.isLoading,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        disabledContainerColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 16.sp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                // Username/Email Field (sign-in mode)
+                TextField(
+                    value = uiState.email,
+                    onValueChange = { viewModel.onEmailChanged(it) },
+                    placeholder = {
+                        Text(
+                            "Email address",
+                            color = Color(0xFF999999)
+                        )
+                    },
+                    enabled = !uiState.isLoading,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        disabledContainerColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 16.sp)
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            
+
             // Password Field
             TextField(
                 value = uiState.password,
                 onValueChange = { viewModel.onPasswordChanged(it) },
-                placeholder = { 
+                placeholder = {
                     Text(
                         "Password",
                         color = Color(0xFF999999)
-                    ) 
+                    )
                 },
                 enabled = !uiState.isLoading,
                 visualTransformation = PasswordVisualTransformation(),
@@ -189,9 +235,9 @@ fun AuthScreen(viewModel: AuthViewModel) {
                 singleLine = true,
                 textStyle = TextStyle(fontSize = 16.sp)
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Error Message
             if (uiState.errorMessage != null) {
                 Text(
@@ -201,9 +247,9 @@ fun AuthScreen(viewModel: AuthViewModel) {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Start Playing Button with Gradient
             GradientButton(
                 text = "Start Playing",
@@ -214,9 +260,10 @@ fun AuthScreen(viewModel: AuthViewModel) {
                     .height(56.dp),
                 isLoading = uiState.isLoading
             )
-            
+
+            // Create Account Button, Or separator, and Google button (only in sign-in mode)
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Create Account Button
             Button(
                 onClick = { viewModel.toggleSignUpMode() },
@@ -231,16 +278,16 @@ fun AuthScreen(viewModel: AuthViewModel) {
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Create Account",
+                    text = if (uiState.isSignUpMode) "Sign in" else "Create Account",
                     color = Color(0xFF333333),
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Or separator
             Text(
                 text = "Or",
@@ -249,9 +296,9 @@ fun AuthScreen(viewModel: AuthViewModel) {
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Continue With Google Button
             Button(
                 onClick = { viewModel.onGoogleSignInClick() },
@@ -407,7 +454,7 @@ fun GradientButton(
         Color(0xFF6750A4), // Purple
         Color(0xFF4285F4)  // Blue
     )
-    
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -456,55 +503,16 @@ fun GradientButton(
 
 @Composable
 fun GoogleLogo(modifier: Modifier = Modifier) {
+    if (!isAndroid) return
     Box(
         modifier = modifier.size(20.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Simplified Google logo using colored circles in a 2x2 grid
-        // G logo colors: Red, Yellow, Green, Blue
-        Column(
-            modifier = Modifier.size(20.dp),
-            verticalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                // Red
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0xFFEA4335))
-                )
-                // Yellow
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0xFFFBBC05))
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                // Green
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0xFF34A853))
-                )
-                // Blue
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0xFF4285F4))
-                )
-            }
-        }
+        Image(
+            modifier = Modifier.size(30.dp),
+            painter = painterResource(Res.drawable.google),
+            contentDescription = "Description"
+        )
     }
 }
 
