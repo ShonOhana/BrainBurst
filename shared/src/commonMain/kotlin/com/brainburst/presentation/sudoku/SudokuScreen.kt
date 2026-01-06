@@ -324,8 +324,28 @@ fun SudokuBoard(
             modifier = Modifier
                 .padding(12.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .border(3.dp, Color(0xFF1A1A1A), RoundedCornerShape(8.dp))
         ) {
+            // Custom border with thicker top
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .border(
+                        width = 0.58.dp,
+                        color = Color(0xFFD1D5DC),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+            )
+            
+            // Thicker top border overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.92.dp)
+                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                    .background(Color(0xFF101828))
+            )
+            
+            // Board content
             Column {
                 for (row in 0 until size) {
                     Row {
@@ -335,6 +355,19 @@ fun SudokuBoard(
                             val isFixed = position in fixedCells
                             val isSelected = position == selectedPosition
                             val isInvalid = position in invalidPositions
+                            
+                            // Determine border widths based on position
+                            val rightBorderWidth = when {
+                                col == size - 1 -> 0.dp // No border on last column
+                                col % 3 == 2 -> 2.dp // Thicker border every 3 columns
+                                else -> 0.5.dp // Thin border
+                            }
+                            
+                            val bottomBorderWidth = when {
+                                row == size - 1 -> 0.dp // No border on last row
+                                row % 2 == 1 -> 2.dp // Thicker border every 2 rows
+                                else -> 0.5.dp // Thin border
+                            }
                             
                             Box(
                                 modifier = Modifier
@@ -346,43 +379,16 @@ fun SudokuBoard(
                                             else -> Color.White
                                         }
                                     )
-                                    .then(
-                                        // Right border
-                                        if (col < size - 1) {
-                                            if (col % 3 == 2) {
-                                                Modifier.border(
-                                                    width = 2.dp,
-                                                    color = Color(0xFF757575)
-                                                )
-                                            } else {
-                                                Modifier.border(
-                                                    width = 1.dp,
-                                                    color = Color(0xFFE0E0E0)
-                                                )
-                                            }
-                                        } else Modifier
-                                    )
-                                    .then(
-                                        // Bottom border
-                                        if (row < size - 1) {
-                                            if (row % 2 == 1) {
-                                                Modifier.border(
-                                                    width = 2.dp,
-                                                    color = Color(0xFF757575)
-                                                )
-                                            } else {
-                                                Modifier.border(
-                                                    width = 1.dp,
-                                                    color = Color(0xFFE0E0E0)
-                                                )
-                                            }
-                                        } else Modifier
+                                    .border(
+                                        width = 0.dp,
+                                        color = Color.Transparent
                                     )
                                     .clickable(enabled = !isFixed) {
                                         onCellClick(position)
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
+                                // Cell content
                                 if (value != 0) {
                                     Text(
                                         text = value.toString(),
@@ -393,6 +399,34 @@ fun SudokuBoard(
                                             isFixed -> Color(0xFF1A1A1A)
                                             else -> Color(0xFF6200EA)
                                         }
+                                    )
+                                }
+                                
+                                // Right border
+                                if (rightBorderWidth > 0.dp) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .width(rightBorderWidth)
+                                            .background(
+                                                if (rightBorderWidth > 1.dp) Color(0xFF667085) 
+                                                else Color(0xFFD1D5DC)
+                                            )
+                                            .align(Alignment.CenterEnd)
+                                    )
+                                }
+                                
+                                // Bottom border
+                                if (bottomBorderWidth > 0.dp) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(bottomBorderWidth)
+                                            .background(
+                                                if (bottomBorderWidth > 1.dp) Color(0xFF667085) 
+                                                else Color(0xFFD1D5DC)
+                                            )
+                                            .align(Alignment.BottomCenter)
                                     )
                                 }
                             }
