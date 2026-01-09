@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.brainburst.domain.game.Position
@@ -138,12 +139,19 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                         }
                     }
                     
-                    // Title - smaller
+                    // Title - smaller with gradient
                     Text(
                         text = "Mini Sudoku",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6200EA)
+                        style = TextStyle(
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFF9810FA),
+                                    Color(0xFF155DFC)
+                                )
+                            )
+                        )
                     )
                     
                     // Subtitle - smaller

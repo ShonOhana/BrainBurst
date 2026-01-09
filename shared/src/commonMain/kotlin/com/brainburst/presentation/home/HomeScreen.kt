@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import brainburst.shared.generated.resources.Res
 import brainburst.shared.generated.resources.sudoku_icon
@@ -61,8 +62,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     Column {
                         Text(
                             text = "BrainBurst 🧠",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            style = TextStyle(
+                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                                fontWeight = FontWeight.Bold,
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color(0xFF9810FA),
+                                        Color(0xFF155DFC)
+                                    )
+                                )
+                            )
                         )
                         uiState.user?.let { user ->
                             Text(
