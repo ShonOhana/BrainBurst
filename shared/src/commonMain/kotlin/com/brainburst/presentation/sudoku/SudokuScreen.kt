@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.brainburst.domain.game.Position
@@ -103,147 +104,172 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                 }
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+            // Use BoxWithConstraints to get available space
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxSize()
             ) {
-                // Back button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start
+                val maxHeight = maxHeight
+                val maxWidth = maxWidth
+                
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
                 ) {
-                    IconButton(onClick = { viewModel.onBackPress() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF6200EA)
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Title
-                Text(
-                    text = "Mini Sudoku",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6200EA)
-                )
-                
-                // Subtitle
-                Text(
-                    text = "6×6 Brain Puzzle",
-                    fontSize = 16.sp,
-                    color = Color(0xFF6200EA).copy(alpha = 0.7f)
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Stats Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
+                    // Back button - more compact
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
                     ) {
-                        // Time
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.weight(1f)
+                        IconButton(
+                            onClick = { viewModel.onBackPress() },
+                            modifier = Modifier.size(40.dp)
                         ) {
-                            // Clock icon using Unicode
-                            Text(
-                                text = "🕐",
-                                fontSize = 28.sp
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF6200EA),
+                                modifier = Modifier.size(24.dp)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Time",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF9E9E9E)
-                                )
-                                Text(
-                                    text = uiState.elapsedTimeFormatted,
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1A1A1A)
-                                )
-                            }
                         }
-                        
-                        // Divider
-                        Box(
-                            modifier = Modifier
-                                .height(50.dp)
-                                .width(1.dp)
-                                .background(Color(0xFFE0E0E0))
-                        )
-                        
-                        // Moves
+                    }
+                    
+                    // Title - smaller
+                    Text(
+                        text = "Mini Sudoku",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6200EA)
+                    )
+                    
+                    // Subtitle - smaller
+                    Text(
+                        text = "6×6 Brain Puzzle",
+                        fontSize = 12.sp,
+                        color = Color(0xFF6200EA).copy(alpha = 0.7f)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Stats Card - more compact
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "#",
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6200EA)
+                            // Time
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.End,
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "🕐",
+                                        fontSize = 20.sp
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Time",
+                                        fontSize = 10.sp,
+                                        color = Color(0xFF9E9E9E)
+                                    )
+                                    Text(
+                                        text = uiState.elapsedTimeFormatted,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1A1A1A)
+                                    )
+                                }
+                            }
+                            
+                            // Divider
+                            Box(
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .width(1.dp)
+                                    .background(Color(0xFFE0E0E0))
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Moves",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF9E9E9E)
-                                )
-                                Text(
-                                    text = uiState.movesCount.toString(),
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1A1A1A)
-                                )
+                            
+                            // Moves
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.End,
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "#",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF6200EA)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Moves",
+                                        fontSize = 10.sp,
+                                        color = Color(0xFF9E9E9E)
+                                    )
+                                    Text(
+                                        text = uiState.movesCount.toString(),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1A1A1A)
+                                    )
+                                }
                             }
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Sudoku board - responsive size with height constraint
+                    val boardWidth = maxWidth * 0.92f
+                    val maxBoardHeight = maxHeight * 0.45f
+                    SudokuBoard(
+                        board = uiState.board,
+                        fixedCells = uiState.fixedCells,
+                        selectedPosition = uiState.selectedPosition,
+                        invalidPositions = uiState.invalidPositions,
+                        onCellClick = { viewModel.onCellClick(it) },
+                        boardWidth = boardWidth,
+                        maxBoardHeight = maxBoardHeight
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Number pad - more compact
+                    NumberPad(
+                        onNumberClick = { viewModel.onNumberPress(it) },
+                        onEraseClick = { viewModel.onErasePress() },
+                        onSubmit = { viewModel.onSubmit() },
+                        isComplete = uiState.isComplete
+                    )
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Sudoku board
-                SudokuBoard(
-                    board = uiState.board,
-                    fixedCells = uiState.fixedCells,
-                    selectedPosition = uiState.selectedPosition,
-                    invalidPositions = uiState.invalidPositions,
-                    onCellClick = { viewModel.onCellClick(it) }
-                )
-                
-                Spacer(modifier = Modifier.weight(1f))
-                
-                // Number pad
-                NumberPad(
-                    onNumberClick = { viewModel.onNumberPress(it) },
-                    onEraseClick = { viewModel.onErasePress() },
-                    onSubmit = { viewModel.onSubmit() },
-                    isComplete = uiState.isComplete
-                )
             }
             
             // Full-screen loader overlay when submitting
@@ -307,22 +333,28 @@ fun SudokuBoard(
     fixedCells: Set<Position>,
     selectedPosition: Position?,
     invalidPositions: List<Position>,
-    onCellClick: (Position) -> Unit
+    onCellClick: (Position) -> Unit,
+    boardWidth: Dp,
+    maxBoardHeight: Dp
 ) {
     if (board.isEmpty()) return
     
     val size = board.size
-    val cellSize = 54.dp
+    // Calculate cell dimensions - width matches board, height constrained by available space
+    val cellWidth = (boardWidth.value / size).dp - 2.dp
+    val idealCellHeight = cellWidth * 1.08f // 8% taller for better visibility
+    val maxCellHeight = (maxBoardHeight.value / size).dp - 2.dp
+    val cellHeight = minOf(idealCellHeight.value, maxCellHeight.value).dp
     
     Card(
         modifier = Modifier.wrapContentSize(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(8.dp)
                 .clip(RoundedCornerShape(8.dp))
         ) {
             // Custom border with thicker top
@@ -330,19 +362,10 @@ fun SudokuBoard(
                 modifier = Modifier
                     .matchParentSize()
                     .border(
-                        width = 0.58.dp,
-                        color = Color(0xFFD1D5DC),
+                        width = 2.dp,
+                        color = Color(0xFF101828),
                         shape = RoundedCornerShape(8.dp)
                     )
-            )
-            
-            // Thicker top border overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.92.dp)
-                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                    .background(Color(0xFF101828))
             )
             
             // Board content
@@ -359,19 +382,20 @@ fun SudokuBoard(
                             // Determine border widths based on position
                             val rightBorderWidth = when {
                                 col == size - 1 -> 0.dp // No border on last column
-                                col % 3 == 2 -> 2.dp // Thicker border every 3 columns
-                                else -> 0.5.dp // Thin border
+                                col % 3 == 2 -> 3.dp // Thicker border every 3 columns
+                                else -> 1.dp // Thin border
                             }
                             
                             val bottomBorderWidth = when {
                                 row == size - 1 -> 0.dp // No border on last row
-                                row % 2 == 1 -> 2.dp // Thicker border every 2 rows
-                                else -> 0.5.dp // Thin border
+                                row % 2 == 1 -> 3.dp // Thicker border every 2 rows
+                                else -> 1.dp // Thin border
                             }
                             
                             Box(
                                 modifier = Modifier
-                                    .size(cellSize)
+                                    .width(cellWidth)
+                                    .height(cellHeight)
                                     .background(
                                         when {
                                             isInvalid -> Color(0xFFFFCDD2)
@@ -388,11 +412,11 @@ fun SudokuBoard(
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
-                                // Cell content
+                                // Cell content - responsive font size
                                 if (value != 0) {
                                     Text(
                                         text = value.toString(),
-                                        fontSize = 28.sp,
+                                        fontSize = (cellWidth.value * 0.5f).sp,
                                         fontWeight = if (isFixed) FontWeight.Bold else FontWeight.Normal,
                                         color = when {
                                             isInvalid -> Color(0xFFD32F2F)
@@ -447,19 +471,19 @@ fun NumberPad(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         // First row: 1-3
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             for (number in 1..3) {
                 Button(
                     onClick = { onNumberClick(number) },
                     modifier = Modifier
                         .weight(1f)
-                        .height(64.dp),
+                        .height(44.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = Color.Black
@@ -468,7 +492,7 @@ fun NumberPad(
                 ) {
                     Text(
                         text = number.toString(),
-                        fontSize = 28.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -478,14 +502,14 @@ fun NumberPad(
         // Second row: 4-6
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             for (number in 4..6) {
                 Button(
                     onClick = { onNumberClick(number) },
                     modifier = Modifier
                         .weight(1f)
-                        .height(64.dp),
+                        .height(44.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = Color.Black
@@ -494,7 +518,7 @@ fun NumberPad(
                 ) {
                     Text(
                         text = number.toString(),
-                        fontSize = 28.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -506,7 +530,7 @@ fun NumberPad(
             onClick = onEraseClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp),
+                .height(44.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color.Black
@@ -516,12 +540,12 @@ fun NumberPad(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Clear",
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Clear",
-                fontSize = 18.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -532,7 +556,7 @@ fun NumberPad(
                 onClick = onSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(44.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF6200EA),
                     contentColor = Color.White
