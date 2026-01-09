@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.brainburst.domain.game.Position
 import com.brainburst.platform.PlatformLifecycleHandler
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -270,6 +271,15 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
+                    // Auto-submit when puzzle is complete
+                    LaunchedEffect(uiState.isComplete) {
+                        if (uiState.isComplete) {
+                            // Wait 500ms before submitting
+                            delay(500)
+                            viewModel.onSubmit()
+                        }
+                    }
+                    
                     // Number pad - more compact
                     NumberPad(
                         onNumberClick = { viewModel.onNumberPress(it) },
@@ -496,7 +506,8 @@ fun NumberPad(
                         containerColor = Color.White,
                         contentColor = Color.Black
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isComplete
                 ) {
                     Text(
                         text = number.toString(),
@@ -522,7 +533,8 @@ fun NumberPad(
                         containerColor = Color.White,
                         contentColor = Color.Black
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isComplete
                 ) {
                     Text(
                         text = number.toString(),
@@ -543,7 +555,8 @@ fun NumberPad(
                 containerColor = Color.White,
                 contentColor = Color.Black
             ),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isComplete
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -558,24 +571,38 @@ fun NumberPad(
             )
         }
         
-        // Submit button (when puzzle is complete)
+        // Success message when puzzle is complete (instead of submit button)
         if (isComplete) {
-            Button(
-                onClick = onSubmit,
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(44.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF6200EA),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = "Submit Solution",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF4CAF50)
                 )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🎉",
+                            fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Puzzle Complete!",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     }

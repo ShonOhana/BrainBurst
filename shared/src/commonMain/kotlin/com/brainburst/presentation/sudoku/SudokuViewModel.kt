@@ -266,6 +266,11 @@ class SudokuViewModel(
         // Update UI
         updateUiFromState()
 
+        // Check if puzzle just became complete and stop timer immediately
+        if (currentState?.isComplete() == true) {
+            pauseTimer()
+        }
+
         // Save state after move
         saveGameState()
     }
@@ -288,9 +293,8 @@ class SudokuViewModel(
 
         // Check if solution is correct
         if (definition.isCompleted(state, payloadData)) {
-            // Stop timer
-            pauseTimer()
-
+            // Timer already stopped when puzzle became complete
+            
             // Calculate total duration
             val durationMs = elapsedMillisWhenPaused
 
