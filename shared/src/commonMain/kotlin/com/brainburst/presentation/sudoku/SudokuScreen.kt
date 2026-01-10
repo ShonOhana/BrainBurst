@@ -32,7 +32,7 @@ private fun countNumberOccurrences(board: List<List<Int>>): Map<Int, Int> {
     for (row in board) {
         for (value in row) {
             if (value != 0) { // Don't count empty cells
-                counts[value] = counts.getOrDefault(value, 0) + 1
+                counts[value] = (counts[value] ?: 0) + 1
             }
         }
     }
@@ -298,7 +298,7 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                         countNumberOccurrences(uiState.board)
                     }
                     val fullyPlacedNumbers = remember(numberCounts) {
-                        (1..6).filter { numberCounts.getOrDefault(it, 0) >= 6 }.toSet()
+                        (1..6).filter { (numberCounts[it] ?: 0) >= 6 }.toSet()
                     }
                     
                     // Number pad - more compact

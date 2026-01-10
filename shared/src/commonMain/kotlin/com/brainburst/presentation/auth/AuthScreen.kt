@@ -3,8 +3,10 @@ package com.brainburst.presentation.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,6 +35,7 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun AuthScreen(viewModel: AuthViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
 
     Scaffold(
         containerColor = Color.Transparent
@@ -41,8 +44,9 @@ fun AuthScreen(viewModel: AuthViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp)
-                .padding(top = 80.dp, bottom = 24.dp),
+                .padding(top = 60.dp, bottom = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
