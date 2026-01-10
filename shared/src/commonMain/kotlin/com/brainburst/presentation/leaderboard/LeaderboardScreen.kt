@@ -12,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,7 +49,7 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    containerColor = Color.White,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
@@ -130,7 +131,7 @@ fun YourResultCard(entry: LeaderboardEntry, rank: Int) {
             .fillMaxWidth()
             .padding(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -182,10 +183,7 @@ fun LeaderboardEntryCard(entry: LeaderboardEntry) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (entry.isCurrentUser) 
-                MaterialTheme.colorScheme.secondaryContainer
-            else 
-                MaterialTheme.colorScheme.surface
+            containerColor = Color.White.copy(alpha = if (entry.isCurrentUser) 1.0f else  0.6f)
         )
     ) {
         Row(

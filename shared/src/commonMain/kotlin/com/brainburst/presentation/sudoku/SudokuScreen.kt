@@ -26,6 +26,19 @@ import com.brainburst.domain.game.Position
 import com.brainburst.platform.PlatformLifecycleHandler
 import kotlinx.coroutines.delay
 
+// Helper function to count number occurrences on the board
+private fun countNumberOccurrences(board: List<List<Int>>): Map<Int, Int> {
+    val counts = mutableMapOf<Int, Int>()
+    for (row in board) {
+        for (value in row) {
+            if (value != 0) { // Don't count empty cells
+                counts[value] = counts.getOrDefault(value, 0) + 1
+            }
+        }
+    }
+    return counts
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SudokuScreen(viewModel: SudokuViewModel) {
@@ -280,13 +293,22 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                         }
                     }
                     
+                    // Calculate which numbers are fully placed (appear 6 times)
+                    val numberCounts = remember(uiState.board) {
+                        countNumberOccurrences(uiState.board)
+                    }
+                    val fullyPlacedNumbers = remember(numberCounts) {
+                        (1..6).filter { numberCounts.getOrDefault(it, 0) >= 6 }.toSet()
+                    }
+                    
                     // Number pad - more compact
                     NumberPad(
                         onNumberClick = { viewModel.onNumberPress(it) },
                         onEraseClick = { viewModel.onErasePress() },
                         onHintClick = { viewModel.onHintPress() },
                         onSubmit = { viewModel.onSubmit() },
-                        isComplete = uiState.isComplete
+                        isComplete = uiState.isComplete,
+                        disabledNumbers = fullyPlacedNumbers
                     )
                 }
             }
@@ -487,7 +509,8 @@ fun NumberPad(
     onEraseClick: () -> Unit,
     onHintClick: () -> Unit,
     onSubmit: () -> Unit,
-    isComplete: Boolean
+    isComplete: Boolean,
+    disabledNumbers: Set<Int> = emptySet()
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -509,7 +532,7 @@ fun NumberPad(
                         contentColor = Color.Black
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isComplete
+                    enabled = !isComplete && number !in disabledNumbers
                 ) {
                     Text(
                         text = number.toString(),
@@ -536,7 +559,7 @@ fun NumberPad(
                         contentColor = Color.Black
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isComplete
+                    enabled = !isComplete && number !in disabledNumbers
                 ) {
                     Text(
                         text = number.toString(),
@@ -558,8 +581,9 @@ fun NumberPad(
                 modifier = Modifier
                     .weight(1f)
                     .height(44.dp),
+
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFA726),
+                    containerColor = Color(0xFF9810FA),
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(12.dp),
