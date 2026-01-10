@@ -48,7 +48,8 @@ private fun AppContent() {
     // Preload ads when app starts
     val adManager: AdManager = koinInject()
     LaunchedEffect(Unit) {
-        adManager.preloadInterstitialAd()
+        adManager.preloadInterstitialAd()  // For leaderboard (short, 5-15s)
+        adManager.preloadRewardedAd()      // For hints (long, 30s, higher revenue)
     }
     
     when (currentScreen) {

@@ -304,10 +304,10 @@ class SudokuViewModel(
             return
         }
         
-        // Show ad
+        // Show rewarded ad (30 seconds, higher revenue)
         viewModelScope.launch {
-            adManager.showInterstitialAd {
-                // After ad closes, solve a random cell
+            adManager.showRewardedAd {
+                // After user watches full ad and earns reward, give hint
                 val randomCell = emptyCells.random()
                 val correctValue = payloadData.solutionBoard[randomCell.row][randomCell.col]
                 
