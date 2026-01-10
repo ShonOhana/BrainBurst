@@ -284,6 +284,7 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                     NumberPad(
                         onNumberClick = { viewModel.onNumberPress(it) },
                         onEraseClick = { viewModel.onErasePress() },
+                        onHintClick = { viewModel.onHintPress() },
                         onSubmit = { viewModel.onSubmit() },
                         isComplete = uiState.isComplete
                     )
@@ -484,6 +485,7 @@ fun SudokuBoard(
 fun NumberPad(
     onNumberClick: (Int) -> Unit,
     onEraseClick: () -> Unit,
+    onHintClick: () -> Unit,
     onSubmit: () -> Unit,
     isComplete: Boolean
 ) {
@@ -545,30 +547,61 @@ fun NumberPad(
             }
         }
         
-        // Clear button
-        Button(
-            onClick = onEraseClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(44.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
-            ),
-            shape = RoundedCornerShape(12.dp),
-            enabled = !isComplete
+        // Clear and Hint buttons in a row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Clear",
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Clear",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
+            // Hint button
+            Button(
+                onClick = onHintClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFA726),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isComplete
+            ) {
+                Text(
+                    text = "💡",
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Hint",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            // Clear button
+            Button(
+                onClick = onEraseClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isComplete
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Clear",
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Clear",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
         
         // Success message when puzzle is complete (instead of submit button)

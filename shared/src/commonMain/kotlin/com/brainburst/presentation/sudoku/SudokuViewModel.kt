@@ -280,6 +280,58 @@ class SudokuViewModel(
         onNumberPress(0) // 0 means erase
     }
 
+    fun onHintPress() {
+        val state = currentState ?: return
+        val payloadData = payload ?: return
+        
+        // Pause the timer
+        pauseTimer()
+        
+        // Find all empty cells that are not fixed
+        val emptyCells = mutableListOf<Position>()
+        for (row in state.board.indices) {
+            for (col in state.board[row].indices) {
+                val position = Position(row, col)
+                if (state.board[row][col] == 0 && position !in state.fixedCells) {
+                    emptyCells.add(position)
+                }
+            }
+        }
+        
+        // If no empty cells, nothing to hint
+        if (emptyCells.isEmpty()) {
+            resumeTimer()
+            return
+        }
+        
+        // Show ad
+        viewModelScope.launch {
+            adManager.showInterstitialAd {
+                // After ad closes, solve a random cell
+                val randomCell = emptyCells.random()
+                val correctValue = payloadData.solutionBoard[randomCell.row][randomCell.col]
+                
+                // Apply the correct value
+                val move = SudokuMove(randomCell, correctValue)
+                currentState = sudokuDefinition?.applyMove(state, move)
+                
+                // Update UI
+                updateUiFromState()
+                
+                // Check if puzzle just became complete and stop timer immediately
+                if (currentState?.isComplete() == true) {
+                    pauseTimer()
+                } else {
+                    // Resume the timer only if puzzle is not complete
+                    resumeTimer()
+                }
+                
+                // Save state
+                saveGameState()
+            }
+        }
+    }
+
     fun onSubmit() {
         val state = currentState ?: return
         val definition = sudokuDefinition ?: return
