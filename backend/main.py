@@ -182,6 +182,7 @@ def _generate_and_store_puzzle(game_type: str, date_str: str, force: bool = Fals
     print(f"✅ Payload validated")
     
     # 3. Delete old puzzles for this game type (keep only today's puzzle)
+    # This also deletes all associated user results to maintain data consistency
     deleted_count = writer.delete_old_puzzles(game_type, date_str)
     
     # 4. Write new puzzle to Firestore
@@ -190,7 +191,7 @@ def _generate_and_store_puzzle(game_type: str, date_str: str, force: bool = Fals
     return {
         "success": True,
         "puzzleId": puzzle_id,
-        "message": "Puzzle generated and stored successfully",
+        "message": "Puzzle generated and stored successfully (old puzzles and results cleaned up)",
         "givens": sum(1 for row in payload["initialBoard"] for cell in row if cell != 0),
         "deletedOldPuzzles": deleted_count
     }

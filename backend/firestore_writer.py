@@ -64,6 +64,7 @@ class FirestoreWriter:
     def delete_old_puzzles(self, game_type: str, keep_date: str) -> int:
         """
         Delete all puzzles for a game type except the one for keep_date.
+        Also deletes all associated user results.
         
         Args:
             game_type: e.g., "MINI_SUDOKU_6X6"
@@ -76,19 +77,48 @@ class FirestoreWriter:
         # Query all puzzles for this game type
         puzzles = puzzles_ref.where("gameType", "==", game_type).stream()
         
-        deleted_count = 0
+        deleted_puzzle_count = 0
+        deleted_results_count = 0
         keep_puzzle_id = f"{game_type}_{keep_date}"
         
         for puzzle in puzzles:
             if puzzle.id != keep_puzzle_id:
+                puzzle_id = puzzle.id
+                
+                # First, delete all results associated with this puzzle
+                results_deleted = self._delete_results_for_puzzle(puzzle_id)
+                deleted_results_count += results_deleted
+                
+                # Then delete the puzzle itself
                 puzzle.reference.delete()
-                deleted_count += 1
-                print(f"🗑️  Deleted old puzzle: {puzzle.id}")
+                deleted_puzzle_count += 1
+                print(f"🗑️  Deleted old puzzle: {puzzle_id} ({results_deleted} results)")
         
-        if deleted_count > 0:
-            print(f"✅ Deleted {deleted_count} old puzzle(s), kept: {keep_puzzle_id}")
+        if deleted_puzzle_count > 0:
+            print(f"✅ Deleted {deleted_puzzle_count} old puzzle(s) and {deleted_results_count} result(s), kept: {keep_puzzle_id}")
         else:
             print(f"ℹ️  No old puzzles to delete")
+        
+        return deleted_puzzle_count
+    
+    def _delete_results_for_puzzle(self, puzzle_id: str) -> int:
+        """
+        Delete all user results associated with a specific puzzle.
+        
+        Args:
+            puzzle_id: The puzzle ID to delete results for
+            
+        Returns:
+            Number of results deleted
+        """
+        results_ref = self.db.collection("results")
+        # Query all results for this puzzle
+        results = results_ref.where("puzzleId", "==", puzzle_id).stream()
+        
+        deleted_count = 0
+        for result in results:
+            result.reference.delete()
+            deleted_count += 1
         
         return deleted_count
 
