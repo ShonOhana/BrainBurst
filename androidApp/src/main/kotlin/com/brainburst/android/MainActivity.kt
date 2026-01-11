@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this) {}
 
         val testConfig = RequestConfiguration.Builder()
-            .setTestDeviceIds(listOf("3A656B41B8712F1DE15746B335E66BC8")) // מזהה המכשיר שלך
+            .setTestDeviceIds(listOf("3A656B41B8712F1DE15746B335E66BC8"))
             .build()
         MobileAds.setRequestConfiguration(testConfig)
         
