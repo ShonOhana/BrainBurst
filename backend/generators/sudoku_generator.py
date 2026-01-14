@@ -28,14 +28,15 @@ class SudokuGenerator:
                 "blockRows": 2,
                 "blockCols": 3,
                 "initialBoard": [[...]], # 6×6 with 0 for empty
-                "solutionBoard": [[...]] # 6×6 complete solution
+                "solutionBoard": [[...]], # 6×6 complete solution
+                "difficulty": "medium" | "hard" | "expert"
             }
         """
         # Use system time for true randomness - each generation will be different
         # This ensures variety: different puzzles, different zero positions, different visible numbers
         
         # Randomly select difficulty
-        difficulty = random.choice(["medium", "hard"])
+        difficulty = random.choice(["medium", "hard", "expert"])
         
         # Generate solution board
         solution_board = self._generate_solution_board()
@@ -48,7 +49,8 @@ class SudokuGenerator:
             "blockRows": self.block_rows,
             "blockCols": self.block_cols,
             "initialBoard": initial_board,
-            "solutionBoard": solution_board
+            "solutionBoard": solution_board,
+            "difficulty": difficulty
         }
     
     def _generate_solution_board(self) -> List[List[int]]:
@@ -190,6 +192,7 @@ class SudokuGenerator:
         Difficulty levels based on solver backtracking depth:
         - Medium: depth = 1 (limited branching)
         - Hard: depth > 1 (deep branching)
+        - Expert: depth > 2 (extensive branching, minimal givens)
         """
         # Start with complete solution
         initial_board = [row[:] for row in solution_board]
@@ -201,7 +204,8 @@ class SudokuGenerator:
         # Target givens based on difficulty (approximate ranges)
         difficulty_targets = {
             "medium": (18, 22),    # Moderate givens
-            "hard": (12, 16)       # Fewer givens = harder
+            "hard": (12, 16),      # Fewer givens = harder
+            "expert": (8, 12)      # Very few givens = expert
         }
         min_givens, max_givens = difficulty_targets.get(difficulty, (18, 22))
         target_givens = random.randint(min_givens, max_givens)
