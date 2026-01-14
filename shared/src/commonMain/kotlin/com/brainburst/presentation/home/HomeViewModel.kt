@@ -218,6 +218,10 @@ class HomeViewModel(
         }
     }
     
+    fun onSettingsClick() {
+        navigator.navigateTo(Screen.Settings)
+    }
+    
     fun onLogoutClick() {
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
         

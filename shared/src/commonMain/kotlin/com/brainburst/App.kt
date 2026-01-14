@@ -17,6 +17,8 @@ import com.brainburst.presentation.leaderboard.LeaderboardScreen
 import com.brainburst.presentation.leaderboard.LeaderboardViewModel
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
+import com.brainburst.presentation.settings.SettingsScreen
+import com.brainburst.presentation.settings.SettingsViewModel
 import com.brainburst.presentation.splash.SplashScreen
 import com.brainburst.presentation.splash.SplashViewModel
 import com.brainburst.presentation.sudoku.SudokuScreen
@@ -64,6 +66,14 @@ private fun AppContent() {
         is Screen.Home -> {
             val viewModel: HomeViewModel = koinInject()
             HomeScreen(viewModel)
+        }
+        is Screen.Settings -> {
+            val viewModel: SettingsViewModel = koinInject()
+            // Handle native back button - same as toolbar back arrow
+            PlatformBackHandler(enabled = true) {
+                viewModel.onBackClick()
+            }
+            SettingsScreen(viewModel)
         }
         is Screen.Sudoku -> {
             val viewModel: SudokuViewModel = koinInject()

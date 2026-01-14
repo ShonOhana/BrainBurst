@@ -212,6 +212,105 @@ class AuthRepositoryImpl(
             Result.failure(e)
         }
     }
+    
+    override suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            val currentFirebaseUser = firebaseAuth.currentUser
+            if (currentFirebaseUser == null) {
+                return Result.failure(Exception("No user is currently logged in"))
+            }
+            
+            val userId = currentFirebaseUser.uid
+            
+            // Step 1: Delete all user's game results from Firestore
+            try {
+                val resultsCollection = firestore.collection("results")
+                val userResults = resultsCollection
+                    .where { "userId" equalTo userId }
+                    .get()
+                
+                // Delete each result document
+                userResults.documents.forEach { document ->
+                    try {
+                        document.reference.delete()
+                    } catch (e: Exception) {
+                        println("Failed to delete result document ${document.id}: ${e.message}")
+                        // Continue with other deletions even if one fails
+                    }
+                }
+            } catch (e: Exception) {
+                println("Failed to query/delete user results: ${e.message}")
+                // Continue with account deletion even if results deletion fails
+            }
+            
+            // Step 2: Delete user profile from Firestore
+            try {
+                usersCollection.document(userId).delete()
+            } catch (e: Exception) {
+                println("Failed to delete user profile: ${e.message}")
+                // Continue with account deletion even if profile deletion fails
+            }
+            
+            // Step 3: Delete the Firebase Auth account
+            // Note: This might fail if the user's authentication token is too old
+            // In that case, the user needs to re-authenticate first
+            try {
+                currentFirebaseUser.delete()
+                Result.success(Unit)
+            } catch (e: Exception) {
+                // Check if error is due to requiring recent authentication
+                val errorMessage = e.message?.lowercase() ?: ""
+                if (errorMessage.contains("requires-recent-login") || 
+                    errorMessage.contains("recent authentication") ||
+                    errorMessage.contains("credential")) {
+                    Result.failure(Exception("For security reasons, please log out and log back in before deleting your account."))
+                } else {
+                    Result.failure(Exception("Failed to delete account: ${e.message}"))
+                }
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("An unexpected error occurred: ${e.message}"))
+        }
+    }
+    
+    override suspend fun updatePassword(currentPassword: String, newPassword: String): Result<Unit> {
+        return try {
+            val currentFirebaseUser = firebaseAuth.currentUser
+            if (currentFirebaseUser == null) {
+                return Result.failure(Exception("No user is currently logged in"))
+            }
+            
+            val email = currentFirebaseUser.email
+            if (email.isNullOrBlank()) {
+                return Result.failure(Exception("Cannot update password for users without email"))
+            }
+            
+            // Step 1: Re-authenticate with current password to verify identity
+            try {
+                firebaseAuth.signInWithEmailAndPassword(email, currentPassword)
+            } catch (e: Exception) {
+                return Result.failure(Exception("Current password is incorrect"))
+            }
+            
+            // Step 2: Update password
+            try {
+                currentFirebaseUser.updatePassword(newPassword)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                val errorMessage = e.message?.lowercase() ?: ""
+                when {
+                    errorMessage.contains("weak-password") || errorMessage.contains("password") -> {
+                        Result.failure(Exception("Password should be at least 6 characters"))
+                    }
+                    else -> {
+                        Result.failure(Exception("Failed to update password: ${e.message}"))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("An unexpected error occurred: ${e.message}"))
+        }
+    }
 }
 
 

@@ -34,6 +34,23 @@ interface AuthRepository {
      * Sign out the current user
      */
     suspend fun signOut(): Result<Unit>
+    
+    /**
+     * Delete the current user's account and all associated data
+     * This will:
+     * 1. Delete user profile from Firestore
+     * 2. Delete all user's game results
+     * 3. Delete the Firebase Auth account
+     */
+    suspend fun deleteAccount(): Result<Unit>
+    
+    /**
+     * Update the current user's password
+     * Requires the user to be recently authenticated
+     * @param currentPassword The user's current password for verification
+     * @param newPassword The new password to set
+     */
+    suspend fun updatePassword(currentPassword: String, newPassword: String): Result<Unit>
 }
 
 
