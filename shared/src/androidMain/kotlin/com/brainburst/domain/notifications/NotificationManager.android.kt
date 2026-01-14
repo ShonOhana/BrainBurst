@@ -120,7 +120,7 @@ actual class NotificationManager(
         )
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_dialog_info) // Using system icon as fallback
+            .setSmallIcon(R.drawable.btn_star) // Using system icon as fallback
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
