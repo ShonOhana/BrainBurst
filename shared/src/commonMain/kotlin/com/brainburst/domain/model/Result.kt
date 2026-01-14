@@ -9,7 +9,8 @@ data class ResultDto(
     val gameType: GameType,
     val date: String,
     val durationMs: Long,
-    val movesCount: Int
+    val movesCount: Int,
+    val displayName: String
 )
 
 

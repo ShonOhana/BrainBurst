@@ -85,19 +85,12 @@ class LeaderboardViewModel(
                                 return@fold
                             }
                             
-                            // Get unique user IDs
-                            val userIds = results.map { it.userId }.distinct()
-                            
-                            // Fetch user data from Firestore
-                            val userDisplayNames = fetchUserDisplayNames(userIds)
-                            
                             // Convert to leaderboard entries
                             val entries = results.mapIndexed { index, resultDto ->
                                 LeaderboardEntry(
                                     rank = index + 1,
                                     userId = resultDto.userId,
-                                    displayName = userDisplayNames[resultDto.userId] 
-                                        ?: "Player ${resultDto.userId.take(6)}",
+                                    displayName = resultDto.displayName,
                                     durationMs = resultDto.durationMs,
                                     formattedTime = formatDuration(resultDto.durationMs),
                                     movesCount = resultDto.movesCount,
@@ -134,47 +127,6 @@ class LeaderboardViewModel(
                     )
                 }
             )
-        }
-    }
-    
-    private suspend fun fetchUserDisplayNames(userIds: List<String>): Map<String, String> {
-        return try {
-            val usersCollection = firestore.collection("users")
-            val userMap = mutableMapOf<String, String>()
-            
-            // Fetch each user document
-            userIds.forEach { userId ->
-                try {
-                    val userDoc = usersCollection.document(userId).get()
-                    if (userDoc.exists) {
-                        val firstName = userDoc.get<String?>("firstName") ?: ""
-                        val lastName = userDoc.get<String?>("lastName") ?: ""
-                        val displayName = userDoc.get<String?>("displayName")
-                        val email = userDoc.get<String?>("email")
-                        
-                        // Prefer firstName + lastName, then displayName, then email, then fallback
-                        val fullName = when {
-                            firstName.isNotBlank() && lastName.isNotBlank() -> "$firstName $lastName"
-                            firstName.isNotBlank() -> firstName
-                            lastName.isNotBlank() -> lastName
-                            !displayName.isNullOrBlank() -> displayName
-                            !email.isNullOrBlank() -> email
-                            else -> "Player ${userId.take(6)}"
-                        }
-                        userMap[userId] = fullName
-                    } else {
-                        userMap[userId] = "Player ${userId.take(6)}"
-                    }
-                } catch (e: Exception) {
-                    // If fetch fails, use fallback
-                    userMap[userId] = "Player ${userId.take(6)}"
-                }
-            }
-            
-            userMap
-        } catch (e: Exception) {
-            // If all fetches fail, return empty map (will use fallback in entries)
-            emptyMap()
         }
     }
     

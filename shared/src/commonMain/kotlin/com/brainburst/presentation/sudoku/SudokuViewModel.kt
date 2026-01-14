@@ -465,7 +465,8 @@ class SudokuViewModel(
             gameType = GameType.MINI_SUDOKU_6X6,
             date = puzzleDto.date,
             durationMs = durationMs,
-            movesCount = movesCount
+            movesCount = movesCount,
+            displayName = user.displayName ?: "Anonymous"
         )
 
         return puzzleRepository.submitResult(result)
