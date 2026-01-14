@@ -60,27 +60,13 @@ fun HomeScreen(viewModel: HomeViewModel) {
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
+                    uiState.user?.let { user ->
                         Text(
-                            text = "BrainBurst 🧠",
-                            style = TextStyle(
-                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
-                                fontWeight = FontWeight.Bold,
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(
-                                        Color(0xFF9810FA),
-                                        Color(0xFF155DFC)
-                                    )
-                                )
-                            )
+                            text = ("Hey " + user.displayName?.split(" ")?.first() + "!" ?: user.email ?: "User"),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.DarkGray
                         )
-                        uiState.user?.let { user ->
-                            Text(
-                                text = user.displayName ?: user.email ?: "User",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     }
                 },
                 actions = {
@@ -109,9 +95,17 @@ fun HomeScreen(viewModel: HomeViewModel) {
         ) {
             Text(
                 text = "Today's Puzzles",
-                style = MaterialTheme.typography.displaySmall,
+                style = TextStyle(
+                    fontSize = MaterialTheme.typography.displaySmall.fontSize,
+                    fontWeight = FontWeight.Bold,
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFF9810FA),
+                            Color(0xFF155DFC)
+                        )
+                    )
+                ),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.height(8.dp))
