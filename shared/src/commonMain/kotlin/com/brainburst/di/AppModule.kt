@@ -2,14 +2,17 @@ package com.brainburst.di
 
 import com.brainburst.data.repository.AuthRepositoryImpl
 import com.brainburst.data.repository.GameStateRepositoryImpl
+import com.brainburst.data.repository.PreferencesRepositoryImpl
 import com.brainburst.data.repository.PuzzleRepositoryImpl
 import com.brainburst.data.storage.createDataStore
 import com.brainburst.domain.admin.AdminPuzzleUploader
 import com.brainburst.domain.game.GameRegistry
 import com.brainburst.domain.game.sudoku.Sudoku6x6Definition
 import com.brainburst.domain.model.GameType
+import com.brainburst.domain.notifications.NotificationManager
 import com.brainburst.domain.repository.AuthRepository
 import com.brainburst.domain.repository.GameStateRepository
+import com.brainburst.domain.repository.PreferencesRepository
 import com.brainburst.domain.repository.PuzzleRepository
 import com.brainburst.presentation.auth.AuthViewModel
 import com.brainburst.presentation.home.HomeViewModel
@@ -64,6 +67,7 @@ val appModule = module {
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
     single<PuzzleRepository> { PuzzleRepositoryImpl(get(), get()) }
     single<GameStateRepository> { GameStateRepositoryImpl(get(), get()) }
+    single<PreferencesRepository> { PreferencesRepositoryImpl(get()) }
     
     // Admin utilities (for development/testing)
     single { AdminPuzzleUploader(get(), get()) }
@@ -72,7 +76,7 @@ val appModule = module {
     factory { SplashViewModel(get(), get(), get()) }
     factory { AuthViewModel(get(), get(), get(), get()) }
     single { HomeViewModel(get(), get(), get(), get(), get(), get()) }  // Single scope to persist cache across navigation
-    factory { SettingsViewModel(get(), get(), get()) }
+    factory { SettingsViewModel(get(), get(), get(), get(), get()) }
     factory { SudokuViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { params -> LeaderboardViewModel(params.get(), get(), get(), get(), get(), get()) }
 }

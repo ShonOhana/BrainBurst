@@ -89,6 +89,12 @@ kotlin {
             
             // AdMob for Android
             implementation("com.google.android.gms:play-services-ads:23.0.0")
+            
+            // WorkManager for notifications
+            implementation(libs.work.runtime)
+            
+            // Firebase Cloud Messaging
+            implementation(libs.firebase.messaging)
         }
         
         commonTest.dependencies {

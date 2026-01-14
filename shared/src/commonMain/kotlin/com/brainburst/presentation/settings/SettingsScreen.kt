@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +45,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val gradientPurple = Color(0xFF6C3CE3)
     val gradientBlue = Color(0xFF5B42F3)
     val backgroundColor = Color(0xFFF5F3FF)
+    
+    // Permission state
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    
+    // Check for permission result
+    LaunchedEffect(uiState.permissionDenied) {
+        if (uiState.permissionDenied) {
+            showPermissionDialog = true
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -202,7 +213,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 title = "Notifications",
                 subtitle = "Enable push notifications",
                 checked = uiState.notificationsEnabled,
-                onCheckedChange = { viewModel.onNotificationsToggle(it) }
+                onCheckedChange = { enabled ->
+                    viewModel.onNotificationsToggle(enabled)
+                }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -270,6 +283,20 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 viewModel.onUpdatePassword(current, new, confirm)
             },
             onDismiss = { viewModel.onChangePasswordDismiss() }
+        )
+    }
+    
+    // Permission Denied Dialog
+    if (showPermissionDialog) {
+        PermissionDeniedDialog(
+            onDismiss = { 
+                showPermissionDialog = false
+                viewModel.onPermissionDialogDismissed()
+            },
+            onOpenSettings = {
+                showPermissionDialog = false
+                viewModel.onOpenNotificationSettings()
+            }
         )
     }
 }
@@ -701,4 +728,49 @@ fun getInitials(displayName: String?, email: String?): String {
         }
         else -> "U"
     }
+}
+
+@Composable
+fun PermissionDeniedDialog(
+    onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = null,
+                tint = Color(0xFF9810FA),
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Notification Permission Required",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "To receive daily puzzle notifications, please grant notification permission in your device settings.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onOpenSettings,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF9810FA)
+                )
+            ) {
+                Text("Open Settings")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Not Now")
+            }
+        }
+    )
 }

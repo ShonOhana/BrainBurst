@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import com.brainburst.domain.ads.AdManager
 import com.brainburst.domain.auth.GoogleSignInProvider
+import com.brainburst.domain.notifications.NotificationManager
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -14,6 +15,9 @@ actual fun getPlatformModule(): Module = module {
     
     // AdManager requires ComponentActivity
     single { AdManager(get<ComponentActivity>()) }
+    
+    // NotificationManager requires Context
+    single { NotificationManager(get<ComponentActivity>() as Context) }
     
     // Provide Android Context for DataStore (as Any to match common signature)
     single<Any> { get<ComponentActivity>() as Context }

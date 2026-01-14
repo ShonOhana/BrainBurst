@@ -102,7 +102,7 @@ class HomeViewModel(
                     games = listOf(
                         GameStateUI.Loading(
                             gameType = GameType.MINI_SUDOKU_6X6,
-                            title = "Mini Sudoku 6×6"
+                            title = "Mini Sudoku"
                         ),
                         GameStateUI.ComingSoon(
                             gameType = GameType.ZIP,
@@ -169,7 +169,7 @@ class HomeViewModel(
             // TODO: Load actual completion time from results
             GameStateUI.Completed(
                 gameType = GameType.MINI_SUDOKU_6X6,
-                title = "Mini Sudoku 6×6",
+                title = "Mini Sudoku",
                 subtitle = "Daily 6×6 Sudoku challenge",
                 completionTimeFormatted = "--:--",
                 formattedDate = formattedDate
@@ -177,7 +177,7 @@ class HomeViewModel(
         } else {
             GameStateUI.Available(
                 gameType = GameType.MINI_SUDOKU_6X6,
-                title = "Mini Sudoku 6×6",
+                title = "Mini Sudoku",
                 subtitle = "Daily 6×6 Sudoku challenge",
                 formattedDate = formattedDate,
                 hasTodayPuzzle = hasTodayPuzzle

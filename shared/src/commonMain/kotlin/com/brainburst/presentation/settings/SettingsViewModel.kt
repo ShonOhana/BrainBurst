@@ -1,7 +1,9 @@
 package com.brainburst.presentation.settings
 
 import com.brainburst.domain.model.User
+import com.brainburst.domain.notifications.NotificationManager
 import com.brainburst.domain.repository.AuthRepository
+import com.brainburst.domain.repository.PreferencesRepository
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
 import kotlinx.coroutines.CoroutineScope
@@ -16,15 +18,18 @@ data class SettingsUiState(
     val errorMessage: String? = null,
     val showDeleteAccountDialog: Boolean = false,
     val isDeleting: Boolean = false,
-    val notificationsEnabled: Boolean = false,  // Default false until push notifications are implemented
+    val notificationsEnabled: Boolean = false,
     val showChangePasswordSheet: Boolean = false,
     val isUpdatingPassword: Boolean = false,
     val passwordUpdateError: String? = null,
-    val passwordUpdateSuccess: Boolean = false
+    val passwordUpdateSuccess: Boolean = false,
+    val permissionDenied: Boolean = false
 )
 
 class SettingsViewModel(
     private val authRepository: AuthRepository,
+    private val preferencesRepository: PreferencesRepository,
+    private val notificationManager: NotificationManager,
     private val navigator: Navigator,
     private val viewModelScope: CoroutineScope
 ) {
@@ -33,12 +38,21 @@ class SettingsViewModel(
     
     init {
         observeAuthState()
+        observeNotificationPreference()
     }
     
     private fun observeAuthState() {
         viewModelScope.launch {
             authRepository.currentUser.collect { user ->
                 _uiState.value = _uiState.value.copy(user = user)
+            }
+        }
+    }
+    
+    private fun observeNotificationPreference() {
+        viewModelScope.launch {
+            preferencesRepository.getNotificationsEnabled().collect { enabled ->
+                _uiState.value = _uiState.value.copy(notificationsEnabled = enabled)
             }
         }
     }
@@ -136,9 +150,78 @@ class SettingsViewModel(
     }
     
     fun onNotificationsToggle(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(notificationsEnabled = enabled)
-        // TODO: Save notification preference to local storage
-        // TODO: Register/unregister for push notifications when implemented
+        viewModelScope.launch {
+            try {
+                if (enabled) {
+                    // Check if we have notification permission
+                    val hasPermission = notificationManager.hasNotificationPermission()
+                    
+                    if (hasPermission) {
+                        // Have permission, proceed with enabling
+                        preferencesRepository.setNotificationsEnabled(true)
+                        notificationManager.scheduleDailyNotifications()
+                        _uiState.value = _uiState.value.copy(
+                            notificationsEnabled = true,
+                            permissionDenied = false
+                        )
+                    } else {
+                        // Need to request permission
+                        notificationManager.requestNotificationPermission()
+                        
+                        // Check again after a short delay (permission might be auto-granted)
+                        kotlinx.coroutines.delay(500)
+                        val hasPermissionNow = notificationManager.hasNotificationPermission()
+                        
+                        if (hasPermissionNow) {
+                            // Permission was granted
+                            preferencesRepository.setNotificationsEnabled(true)
+                            notificationManager.scheduleDailyNotifications()
+                            _uiState.value = _uiState.value.copy(
+                                notificationsEnabled = true,
+                                permissionDenied = false
+                            )
+                        } else {
+                            // Permission was denied or dialog is still showing
+                            _uiState.value = _uiState.value.copy(
+                                notificationsEnabled = false,
+                                permissionDenied = true
+                            )
+                        }
+                    }
+                } else {
+                    // Disabling notifications
+                    preferencesRepository.setNotificationsEnabled(false)
+                    notificationManager.cancelDailyNotifications()
+                    _uiState.value = _uiState.value.copy(
+                        notificationsEnabled = false,
+                        permissionDenied = false
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Revert the toggle if there's an error
+                _uiState.value = _uiState.value.copy(
+                    notificationsEnabled = !enabled,
+                    permissionDenied = false
+                )
+            }
+        }
+    }
+    
+    fun onPermissionDialogDismissed() {
+        _uiState.value = _uiState.value.copy(
+            permissionDenied = false,
+            notificationsEnabled = false
+        )
+    }
+    
+    fun onOpenNotificationSettings() {
+        // This will need to be handled by platform-specific code
+        // For now, just dismiss the dialog
+        _uiState.value = _uiState.value.copy(
+            permissionDenied = false,
+            notificationsEnabled = false
+        )
     }
     
     fun onDeleteAccountClick() {

@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.brainburst.di.getAllModules
 import com.brainburst.domain.ads.AdManager
+import com.brainburst.domain.notifications.NotificationManager
+import com.brainburst.domain.repository.PreferencesRepository
 import com.brainburst.presentation.auth.AuthScreen
 import com.brainburst.presentation.auth.AuthViewModel
 import com.brainburst.presentation.home.HomeScreen
@@ -52,6 +54,21 @@ private fun AppContent() {
     LaunchedEffect(Unit) {
         adManager.preloadInterstitialAd()  // For leaderboard (short, 5-15s)
         adManager.preloadRewardedAd()      // For hints (long, 30s, higher revenue)
+    }
+    
+    // Initialize notifications if enabled
+    val notificationManager: NotificationManager = koinInject()
+    val preferencesRepository: PreferencesRepository = koinInject()
+    LaunchedEffect(Unit) {
+        try {
+            preferencesRepository.getNotificationsEnabled().collect { notificationsEnabled ->
+                if (notificationsEnabled) {
+                    notificationManager.scheduleDailyNotifications()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
     
     when (currentScreen) {

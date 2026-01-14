@@ -51,6 +51,12 @@ dependencies {
     
     // AdMob
     implementation("com.google.android.gms:play-services-ads:23.0.0")
+    
+    // Firebase Cloud Messaging
+    implementation(libs.firebase.messaging)
+    
+    // WorkManager for daily notifications
+    implementation(libs.work.runtime)
 }
 
 
