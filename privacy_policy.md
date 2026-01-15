@@ -1,6 +1,6 @@
 Privacy Policy
 
-Last updated: 215.01.2026
+Last updated: 15.01.2026
 
 This Privacy Policy explains how the application (“the App”) collects, uses, and protects user information.
 
