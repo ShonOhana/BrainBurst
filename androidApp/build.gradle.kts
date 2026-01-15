@@ -59,6 +59,9 @@ dependencies {
     // Firebase Crashlytics
     implementation(libs.firebase.crashlytics)
     
+    // Firebase Analytics
+    implementation(libs.firebase.analytics)
+    
     // WorkManager for daily notifications
     implementation(libs.work.runtime)
 }

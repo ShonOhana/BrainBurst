@@ -41,6 +41,9 @@ kotlin {
         pod("FirebaseFirestore") {
             version = "11.5.0"
         }
+        pod("FirebaseAnalytics") {
+            version = "11.5.0"
+        }
         // Temporarily disabled Google Sign-In
         // pod("GoogleSignIn") {
         //     version = "~> 7.1"
@@ -121,5 +124,27 @@ compose {
     resources {
         publicResClass = true
     }
+}
+
+// Fix deployment target for synthetic iOS Podfile
+tasks.register("fixSyntheticPodfile") {
+    doLast {
+        val syntheticPodfile = file("build/cocoapods/synthetic/ios/Podfile")
+        if (syntheticPodfile.exists()) {
+            var content = syntheticPodfile.readText()
+            // Replace the deployment target check from 11.0 to 15.0
+            content = content.replace(
+                "if deployment_target_major < 11 || (deployment_target_major == 11 && deployment_target_minor < 0) then\n            version = \"#{11}.#{0}\"",
+                "if deployment_target_major < 15 || (deployment_target_major == 15 && deployment_target_minor < 0) then\n            version = \"#{15}.#{0}\""
+            )
+            syntheticPodfile.writeText(content)
+            println("Fixed deployment target to 15.0 in synthetic Podfile")
+        }
+    }
+}
+
+// Run the fix after pod generation
+tasks.named("podGenIos").configure {
+    finalizedBy("fixSyntheticPodfile")
 }
 

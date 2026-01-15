@@ -9,6 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/Shared.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '15.0'
+    spec.dependency 'FirebaseAnalytics', '11.5.0'
     spec.dependency 'FirebaseAuth', '11.5.0'
     spec.dependency 'FirebaseFirestore', '11.5.0'
                 
