@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 android {
@@ -54,6 +55,9 @@ dependencies {
     
     // Firebase Cloud Messaging
     implementation(libs.firebase.messaging)
+    
+    // Firebase Crashlytics
+    implementation(libs.firebase.crashlytics)
     
     // WorkManager for daily notifications
     implementation(libs.work.runtime)

@@ -8,6 +8,7 @@ target 'iosApp' do
   # Pods for iosApp
   pod 'FirebaseAuth', '11.5.0'
   pod 'FirebaseFirestore', '11.5.0'
+  pod 'FirebaseCrashlytics', '11.5.0'
   # Temporarily disabled Google Sign-In due to framework conflicts
   # pod 'GoogleSignIn', '~> 7.1'
   

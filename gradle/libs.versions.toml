@@ -12,6 +12,8 @@ datastore = "1.1.1"
 koin = "4.0.0"
 firebase-gitlive = "2.1.0"
 google-services = "4.4.2"
+firebase-crashlytics-plugin = "3.0.2"
+firebase-crashlytics = "19.2.1"
 play-services-auth = "21.2.0"
 playServicesAdsApi = "24.9.0"
 firebase-messaging = "24.1.0"
@@ -37,6 +39,7 @@ koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-gitlive" }
 firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-gitlive" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebase-messaging" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "firebase-crashlytics" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "play-services-auth" }
 play-services-ads-api = { group = "com.google.android.gms", name = "play-services-ads-api", version.ref = "playServicesAdsApi" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime" }
@@ -50,4 +53,5 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-plugin" }
 
