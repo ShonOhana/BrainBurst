@@ -413,9 +413,9 @@ fun GameCard(
                                     disabledContentColor = Color.Black
                                 )
                             ) {
-                                Box(
+                                Row (
                                     modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         modifier = Modifier.alpha(0.3f),
@@ -428,8 +428,8 @@ fun GameCard(
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(30.dp)
-                                            .alpha(0.3f)
-                                            .align(Alignment.CenterEnd),
+                                            .alpha(0.3f),
+//                                            .align(Alignment.CenterEnd),
                                         tint = Color.Unspecified
                                     )
                                 }
