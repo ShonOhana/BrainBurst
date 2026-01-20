@@ -15,9 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -312,6 +315,35 @@ fun ZipGrid(
                 .padding(12.dp)
                 .onGloballyPositioned { coordinates ->
                     gridSize = coordinates.size
+                }
+                .drawBehind {
+                    // Draw lines connecting path positions
+                    if (path.size > 1 && gridSize.width > 0 && gridSize.height > 0) {
+                        val cellWidth = size.width / 6f
+                        val cellHeight = size.height / 6f
+                        
+                        for (i in 0 until path.size - 1) {
+                            val start = path[i]
+                            val end = path[i + 1]
+                            
+                            val startOffset = Offset(
+                                x = (start.col + 0.5f) * cellWidth,
+                                y = (start.row + 0.5f) * cellHeight
+                            )
+                            val endOffset = Offset(
+                                x = (end.col + 0.5f) * cellWidth,
+                                y = (end.row + 0.5f) * cellHeight
+                            )
+                            
+                            drawLine(
+                                color = Color(0xFFFF5722),
+                                start = startOffset,
+                                end = endOffset,
+                                strokeWidth = 12f,
+                                cap = StrokeCap.Round
+                            )
+                        }
+                    }
                 }
                 .pointerInput(Unit) {
                     detectDragGestures(

@@ -212,40 +212,40 @@ fun GameCard(
     val completedCardBorder = Color(0xFF884CE9)
     val leaderboardButtonColor = Color.White
 
-    // Determine if this is a SUDOKU game that should have gradient
-    val isSudokuGame = gameState.gameType == GameType.MINI_SUDOKU_6X6
-    val shouldUseGradient = isSudokuGame && (gameState is GameStateUI.Available || gameState is GameStateUI.Completed)
+    // Determine if this is a SUDOKU or ZIP game that should have gradient
+    val isGradientGame = gameState.gameType == GameType.MINI_SUDOKU_6X6 || gameState.gameType == GameType.ZIP
+    val shouldUseGradient = isGradientGame && (gameState is GameStateUI.Available || gameState is GameStateUI.Completed)
 
     val cardColor = when (gameState) {
         is GameStateUI.Available -> {
-            if (isSudokuGame) Color.Transparent // Will use gradient instead
-            else Color.White // White background for ZIP and TANGO
+            if (isGradientGame) Color.Transparent // Will use gradient instead
+            else Color.White // White background for TANGO
         }
         is GameStateUI.Completed -> {
-            if (isSudokuGame) Color.Transparent // Will use gradient instead
-            else Color.White // White background for ZIP and TANGO
+            if (isGradientGame) Color.Transparent // Will use gradient instead
+            else Color.White // White background for TANGO
         }
         is GameStateUI.ComingSoon -> Color.White
         is GameStateUI.Loading -> Color.White
     }
     val textColor = when (gameState) {
         is GameStateUI.Available -> {
-            if (isSudokuGame) Color.White // White text for gradient background
+            if (isGradientGame) Color.White // White text for gradient background
             else Color.Black // Black text for white background
         }
         is GameStateUI.Completed -> {
-            if (isSudokuGame) Color.White // White text for gradient background
+            if (isGradientGame) Color.White // White text for gradient background
             else Color.Black // Black text for white background
         }
         is GameStateUI.ComingSoon -> MaterialTheme.colorScheme.onSurfaceVariant
         is GameStateUI.Loading -> MaterialTheme.colorScheme.onSurface
     }
 
-    // Add border for completed state (only for non-SUDOKU games)
+    // Add border for completed state (only for non-gradient games)
     val cardModifier = Modifier
         .fillMaxWidth()
         .then(
-            if (gameState is GameStateUI.Completed && !isSudokuGame) {
+            if (gameState is GameStateUI.Completed && !isGradientGame) {
                 Modifier.border(1.dp, completedCardBorder, MaterialTheme.shapes.medium)
             } else {
                 Modifier
@@ -256,7 +256,7 @@ fun GameCard(
             else Modifier
         )
 
-    // Use large rounded corners for SUDOKU (both Available and Completed states)
+    // Use large rounded corners for gradient games (both Available and Completed states)
     val cardShape = if (shouldUseGradient) {
         MaterialTheme.shapes.extraLarge
     } else {
@@ -287,12 +287,16 @@ fun GameCard(
                 Row(
                     modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = if (gameState is GameStateUI.Available && isGradientGame) 
+                        Alignment.CenterVertically 
+                    else 
+                        Alignment.CenterVertically
                 ) {
                     // Add GameIcon on Android only
                     if (isAndroid) {
                         GameIcon(
                             gameType = gameState.gameType,
+                            tintColor = if (shouldUseGradient) Color.White else null,
                             modifier = Modifier.padding(end = 12.dp)
                         )
                     }
@@ -301,29 +305,40 @@ fun GameCard(
                     Column(
                         verticalArrangement = Arrangement.Center
                     ) {
-                        if (gameState is GameStateUI.Available && isSudokuGame) {
-                            // For Available SUDOKU state, split title into three lines: "Mini", "Sudoku", "6x6"
+                        if (gameState is GameStateUI.Available && isGradientGame) {
+                            // For Available gradient games (SUDOKU and ZIP)
                             val titleParts = gameState.title.split(" ")
-                            Text(
-                                text = titleParts.getOrElse(0) { "" },
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor
-                            )
-                            Text(
-                                text = titleParts.getOrElse(1) { "" },
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor
-                            )
-                            Text(
-                                text = titleParts.getOrElse(2) { "" }.replace("×", "x"),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor
-                            )
+                            // Only split into multiple lines if title has multiple words (like "Mini Sudoku 6x6")
+                            if (titleParts.size > 1) {
+                                Text(
+                                    text = titleParts.getOrElse(0) { "" },
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor
+                                )
+                                Text(
+                                    text = titleParts.getOrElse(1) { "" },
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor
+                                )
+                                Text(
+                                    text = titleParts.getOrElse(2) { "" }.replace("×", "x"),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor
+                                )
+                            } else {
+                                // Single word title (like "Zip"), show as single line
+                                Text(
+                                    text = gameState.title,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor
+                                )
+                            }
                         } else {
-                            // Title for other states or non-SUDOKU games
+                            // Title for other states or non-gradient games
                             Text(
                                 modifier = if (shouldUseGradient) Modifier else Modifier.alpha(0.5f),
                                 text = gameState.title,
@@ -486,7 +501,8 @@ fun GameCard(
 @Composable
 fun GameIcon(
     gameType: GameType,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tintColor: Color? = null
 ) {
     Box(
         modifier = modifier,
@@ -497,7 +513,8 @@ fun GameIcon(
                 Image(
                     modifier = Modifier.size(30.dp),
                     painter = painterResource(Res.drawable.sudoku_icon),
-                    contentDescription = "Description"
+                    contentDescription = "Description",
+                    colorFilter = tintColor?.let { androidx.compose.ui.graphics.ColorFilter.tint(it) }
                 )
             }
 
@@ -505,7 +522,8 @@ fun GameIcon(
                 Image(
                     modifier = Modifier.size(20.dp),
                     painter = painterResource(Res.drawable.zip_icon),
-                    contentDescription = "Description"
+                    contentDescription = "Description",
+                    colorFilter = tintColor?.let { androidx.compose.ui.graphics.ColorFilter.tint(it) }
                 )
             }
 
@@ -513,7 +531,8 @@ fun GameIcon(
                 Image(
                     modifier = Modifier.size(20.dp),
                     painter = painterResource(Res.drawable.tango_icon),
-                    contentDescription = "Description"
+                    contentDescription = "Description",
+                    colorFilter = tintColor?.let { androidx.compose.ui.graphics.ColorFilter.tint(it) }
                 )
             }
         }
