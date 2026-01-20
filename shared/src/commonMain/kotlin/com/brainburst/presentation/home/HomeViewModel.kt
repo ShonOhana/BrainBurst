@@ -80,13 +80,11 @@ class HomeViewModel(
             
             // If we have cached data and date hasn't changed, use cache
             if (!shouldReload && cachedSudokuState != null) {
+                val zipState = loadZipState(user.uid)
                 _uiState.value = _uiState.value.copy(
                     games = listOf(
                         cachedSudokuState!!,
-                        GameStateUI.ComingSoon(
-                            gameType = GameType.ZIP,
-                            title = "Zip"
-                        ),
+                        zipState,
                         GameStateUI.ComingSoon(
                             gameType = GameType.TANGO,
                             title = "Tango"
@@ -104,7 +102,7 @@ class HomeViewModel(
                             gameType = GameType.MINI_SUDOKU_6X6,
                             title = "Mini Sudoku 6×6"
                         ),
-                        GameStateUI.ComingSoon(
+                        GameStateUI.Loading(
                             gameType = GameType.ZIP,
                             title = "Zip"
                         ),
@@ -119,6 +117,9 @@ class HomeViewModel(
             // Load Sudoku state
             val sudokuState = loadSudokuState(user.uid)
             
+            // Load ZIP state
+            val zipState = loadZipState(user.uid)
+            
             // Cache the result
             cachedSudokuState = sudokuState
             lastCheckedDate = today
@@ -127,10 +128,7 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(
                 games = listOf(
                     sudokuState,
-                    GameStateUI.ComingSoon(
-                        gameType = GameType.ZIP,
-                        title = "Zip"
-                    ),
+                    zipState,
                     GameStateUI.ComingSoon(
                         gameType = GameType.TANGO,
                         title = "Tango"
@@ -185,6 +183,43 @@ class HomeViewModel(
         }
     }
     
+    private suspend fun loadZipState(userId: String): GameStateUI {
+        val latestDate = puzzleRepository.getLatestAvailablePuzzleDate(GameType.ZIP)
+            .getOrNull()
+        
+        val today = Clock.System.todayIn(TimeZone.UTC).toString()
+        val hasTodayPuzzle = latestDate == today
+        
+        val formattedDate = latestDate?.let { DateFormatter.formatPuzzleDate(it) } ?: ""
+        
+        val hasCompleted = if (latestDate != null) {
+            puzzleRepository.hasUserCompletedToday(
+                userId = userId,
+                gameType = GameType.ZIP
+            ).getOrElse { false }
+        } else {
+            false
+        }
+        
+        return if (hasCompleted) {
+            GameStateUI.Completed(
+                gameType = GameType.ZIP,
+                title = "Zip",
+                subtitle = "Connect the dots",
+                completionTimeFormatted = "--:--",
+                formattedDate = formattedDate
+            )
+        } else {
+            GameStateUI.Available(
+                gameType = GameType.ZIP,
+                title = "Zip",
+                subtitle = "Connect the dots",
+                formattedDate = formattedDate,
+                hasTodayPuzzle = hasTodayPuzzle
+            )
+        }
+    }
+    
     fun onGameClick(gameType: GameType) {
         when (gameType) {
             GameType.MINI_SUDOKU_6X6 -> {
@@ -201,6 +236,26 @@ class HomeViewModel(
                     }
                     is GameStateUI.Completed -> {
                         // User has completed - show ad then show results
+                        viewModelScope.launch {
+                            adManager.showInterstitialAd {
+                                navigator.navigateTo(Screen.Leaderboard(gameType))
+                            }
+                        }
+                    }
+                    else -> {
+                        // Loading or Coming Soon - do nothing
+                    }
+                }
+            }
+            GameType.ZIP -> {
+                val gameState = _uiState.value.games.find { it.gameType == gameType }
+                when (gameState) {
+                    is GameStateUI.Available -> {
+                        viewModelScope.launch {
+                            navigator.navigateTo(Screen.Zip)
+                        }
+                    }
+                    is GameStateUI.Completed -> {
                         viewModelScope.launch {
                             adManager.showInterstitialAd {
                                 navigator.navigateTo(Screen.Leaderboard(gameType))
@@ -289,7 +344,7 @@ class HomeViewModel(
             navigator.currentScreen.collect { currentScreen ->
                 // When navigating to Home from Sudoku or Leaderboard, refresh to get updated completion status
                 if (currentScreen is Screen.Home && previousScreen != null) {
-                    val cameFromGameScreen = previousScreen is Screen.Sudoku || previousScreen is Screen.Leaderboard
+                    val cameFromGameScreen = previousScreen is Screen.Sudoku || previousScreen is Screen.Zip || previousScreen is Screen.Leaderboard
                     if (cameFromGameScreen && isDataLoaded) {
                         // Only refresh if we already have data loaded (to avoid double loading on initial load)
                         // This ensures we get the latest completion status when returning from game

@@ -8,6 +8,7 @@ import com.brainburst.data.storage.createDataStore
 import com.brainburst.domain.admin.AdminPuzzleUploader
 import com.brainburst.domain.game.GameRegistry
 import com.brainburst.domain.game.sudoku.Sudoku6x6Definition
+import com.brainburst.domain.game.zip.ZipDefinition
 import com.brainburst.domain.model.GameType
 import com.brainburst.domain.notifications.NotificationManager
 import com.brainburst.domain.repository.AuthRepository
@@ -21,6 +22,7 @@ import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.settings.SettingsViewModel
 import com.brainburst.presentation.splash.SplashViewModel
 import com.brainburst.presentation.sudoku.SudokuViewModel
+import com.brainburst.presentation.zip.ZipViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
@@ -55,7 +57,8 @@ val appModule = module {
     single { 
         GameRegistry(
             games = listOf(
-                Sudoku6x6Definition(get())
+                Sudoku6x6Definition(get()),
+                ZipDefinition(get())
             )
         )
     }
@@ -78,6 +81,7 @@ val appModule = module {
     single { HomeViewModel(get(), get(), get(), get(), get(), get()) }  // Single scope to persist cache across navigation
     factory { SettingsViewModel(get(), get(), get(), get(), get()) }
     factory { SudokuViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { ZipViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { params -> LeaderboardViewModel(params.get(), get(), get(), get(), get(), get()) }
 }
 

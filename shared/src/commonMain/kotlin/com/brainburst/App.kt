@@ -25,6 +25,8 @@ import com.brainburst.presentation.splash.SplashScreen
 import com.brainburst.presentation.splash.SplashViewModel
 import com.brainburst.presentation.sudoku.SudokuScreen
 import com.brainburst.presentation.sudoku.SudokuViewModel
+import com.brainburst.presentation.zip.ZipScreen
+import com.brainburst.presentation.zip.ZipViewModel
 import com.brainburst.platform.PlatformBackHandler
 import org.koin.core.parameter.parametersOf
 import com.brainburst.ui.theme.BrainBurstTheme
@@ -99,6 +101,14 @@ private fun AppContent() {
                 viewModel.onBackPress()
             }
             SudokuScreen(viewModel)
+        }
+        is Screen.Zip -> {
+            val viewModel: ZipViewModel = koinInject()
+            // Handle native back button - same as toolbar back arrow
+            PlatformBackHandler(enabled = true) {
+                viewModel.onBackPress()
+            }
+            ZipScreen(viewModel)
         }
         is Screen.Leaderboard -> {
             val leaderboardScreen = currentScreen as Screen.Leaderboard

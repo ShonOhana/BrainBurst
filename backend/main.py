@@ -18,7 +18,7 @@ from openai import OpenAI
 import functions_framework
 
 # Local imports
-from generators import SudokuGenerator
+from generators import SudokuGenerator, ZipGenerator
 from validators import SudokuValidator
 from firestore_writer import FirestoreWriter
 
@@ -52,13 +52,14 @@ db = firestore.client()
 # Initialize generator registry (no OpenAI dependency needed)
 GENERATORS = {
     "MINI_SUDOKU_6X6": SudokuGenerator(),  # Deterministic generator, no API key needed
+    "ZIP": ZipGenerator(),  # ZIP puzzle generator
     # Future games:
-    # "ZIP": ZipGenerator(),
     # "TANGO": TangoGenerator(),
 }
 
 VALIDATORS = {
     "MINI_SUDOKU_6X6": SudokuValidator(size=6, block_rows=2, block_cols=3),
+    # ZIP doesn't need complex validation - basic structure is enough
 }
 
 
@@ -142,7 +143,7 @@ def _generate_and_store_puzzle(game_type: str, date_str: str, force: bool = Fals
     
     # Generate with retry logic (up to 3 attempts)
     generator = GENERATORS[game_type]
-    validator = VALIDATORS[game_type]
+    validator = VALIDATORS.get(game_type)  # ZIP doesn't have a validator
     max_attempts = 5  # More attempts to get valid puzzle
     payload = None
     
@@ -152,22 +153,27 @@ def _generate_and_store_puzzle(game_type: str, date_str: str, force: bool = Fals
             payload = generator.generate_payload(date_str)
             print(f"✅ Payload generated")
             
-            # Validate payload
-            is_valid, error_msg = validator.validate_payload(payload)
-            
-            if is_valid:
-                print(f"✅ Payload validated")
-                break
-            else:
-                print(f"❌ Validation failed: {error_msg}")
-                if attempt < max_attempts:
-                    print(f"   Retrying with new generation...")
-                    continue
+            # Validate payload if validator exists
+            if validator:
+                is_valid, error_msg = validator.validate_payload(payload)
+                
+                if is_valid:
+                    print(f"✅ Payload validated")
+                    break
                 else:
-                    return {
-                        "success": False,
-                        "error": f"Validation failed after {max_attempts} attempts: {error_msg}"
-                    }
+                    print(f"❌ Validation failed: {error_msg}")
+                    if attempt < max_attempts:
+                        print(f"   Retrying with new generation...")
+                        continue
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Validation failed after {max_attempts} attempts: {error_msg}"
+                        }
+            else:
+                # No validator - basic structure check passed
+                print(f"✅ Basic structure validated")
+                break
         except Exception as e:
             print(f"❌ Generation failed: {e}")
             if attempt < max_attempts:
@@ -188,13 +194,21 @@ def _generate_and_store_puzzle(game_type: str, date_str: str, force: bool = Fals
     # 4. Write new puzzle to Firestore
     puzzle_id = writer.write_puzzle(game_type, date_str, payload)
     
-    return {
+    # Build success message with appropriate stats
+    result_data = {
         "success": True,
         "puzzleId": puzzle_id,
         "message": "Puzzle generated and stored successfully (old puzzles and results cleaned up)",
-        "givens": sum(1 for row in payload["initialBoard"] for cell in row if cell != 0),
         "deletedOldPuzzles": deleted_count
     }
+    
+    # Add game-specific stats
+    if game_type == "MINI_SUDOKU_6X6":
+        result_data["givens"] = sum(1 for row in payload["initialBoard"] for cell in row if cell != 0)
+    elif game_type == "ZIP":
+        result_data["dots"] = len(payload.get("dots", []))
+    
+    return result_data
 
 
 def main_cli():

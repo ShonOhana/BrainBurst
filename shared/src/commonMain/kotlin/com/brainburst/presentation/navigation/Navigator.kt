@@ -19,6 +19,7 @@ class Navigator {
             is Screen.Home -> navigateTo(Screen.Auth)
             is Screen.Settings -> navigateTo(Screen.Home)
             is Screen.Sudoku -> navigateTo(Screen.Home)
+            is Screen.Zip -> navigateTo(Screen.Home)
             is Screen.Leaderboard -> navigateTo(Screen.Home)
             else -> {} // Can't go back from Splash
         }

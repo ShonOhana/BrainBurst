@@ -13,6 +13,13 @@ data class SudokuMove(
     val value: Int  // 0 to clear, 1-6 for Mini Sudoku 6x6
 ) : GameMove
 
+/**
+ * Represents a move in ZIP where a cell is added to the path
+ */
+data class ZipMove(
+    val position: Position
+) : GameMove
+
 
 
 
