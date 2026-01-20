@@ -2,6 +2,7 @@
 
 # BrainBurst Backend - Cloud Scheduler Setup Script
 # This script sets up automatic daily puzzle generation at 9:00 AM UTC
+# Creates jobs for both Sudoku and ZIP puzzles
 
 set -e  # Exit on error
 
@@ -29,7 +30,6 @@ gcloud config set project ${PROJECT_ID}
 # Function configuration
 FUNCTION_NAME="generate-daily-puzzle"
 REGION="us-central1"
-JOB_NAME="daily-puzzle-sudoku"
 
 # Get function URL
 echo "🔍 Getting Cloud Function URL..."
@@ -47,85 +47,86 @@ fi
 echo -e "${GREEN}✅ Found function: ${FUNCTION_URL}${NC}"
 echo ""
 
-# Check if scheduler job already exists
-EXISTING_JOB=$(gcloud scheduler jobs describe ${JOB_NAME} \
-  --location=${REGION} \
-  --format="value(name)" 2>/dev/null || echo "")
+# Enable Cloud Scheduler API
+echo "🔧 Enabling Cloud Scheduler API..."
+gcloud services enable cloudscheduler.googleapis.com --quiet
 
-if [ -n "$EXISTING_JOB" ]; then
-    echo -e "${YELLOW}⚠️  Scheduler job already exists!${NC}"
-    echo ""
-    read -p "Do you want to update it? (y/n): " update_choice
-    if [ "$update_choice" != "y" ]; then
-        echo "Exiting..."
-        exit 0
-    fi
+# Function to create or update a scheduler job
+create_or_update_job() {
+    local JOB_NAME=$1
+    local GAME_TYPE=$2
+    local DESCRIPTION=$3
     
-    # Update existing job
     echo ""
-    echo "🔄 Updating existing scheduler job..."
-    gcloud scheduler jobs update http ${JOB_NAME} \
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🎮 Setting up: ${JOB_NAME}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # Check if scheduler job already exists
+    EXISTING_JOB=$(gcloud scheduler jobs describe ${JOB_NAME} \
       --location=${REGION} \
-      --schedule="0 9 * * *" \
-      --uri="${FUNCTION_URL}" \
-      --http-method=POST \
-      --message-body='{"gameType":"MINI_SUDOKU_6X6"}' \
-      --update-headers="Content-Type=application/json" \
-      --time-zone="UTC" \
-      --description="Daily puzzle generation at 9:00 AM UTC"
+      --format="value(name)" 2>/dev/null || echo "")
     
-    echo ""
-    echo -e "${GREEN}✅ Scheduler job updated!${NC}"
-else
-    # Enable Cloud Scheduler API
-    echo "🔧 Enabling Cloud Scheduler API..."
-    gcloud services enable cloudscheduler.googleapis.com --quiet
-    
-    # Create new job
-    echo ""
-    echo "📅 Creating daily scheduler job..."
-    echo "   Schedule: Every day at 9:00 AM UTC"
-    echo "   Target: ${FUNCTION_URL}"
-    echo ""
-    
-    gcloud scheduler jobs create http ${JOB_NAME} \
-      --location=${REGION} \
-      --schedule="0 9 * * *" \
-      --uri="${FUNCTION_URL}" \
-      --http-method=POST \
-      --message-body='{"gameType":"MINI_SUDOKU_6X6"}' \
-      --update-headers="Content-Type=application/json" \
-      --time-zone="UTC" \
-      --description="Daily puzzle generation at 9:00 AM UTC" \
-      --attempt-deadline=600s
-    
-    if [ $? -eq 0 ]; then
-        echo ""
-        echo -e "${GREEN}✅ Scheduler job created successfully!${NC}"
+    if [ -n "$EXISTING_JOB" ]; then
+        echo -e "${YELLOW}⚠️  Job already exists, updating...${NC}"
+        
+        gcloud scheduler jobs update http ${JOB_NAME} \
+          --location=${REGION} \
+          --schedule="0 9 * * *" \
+          --uri="${FUNCTION_URL}" \
+          --http-method=POST \
+          --message-body="{\"gameType\":\"${GAME_TYPE}\"}" \
+          --update-headers="Content-Type=application/json" \
+          --time-zone="UTC" \
+          --description="${DESCRIPTION}"
+        
+        echo -e "${GREEN}✅ Job updated successfully!${NC}"
     else
-        echo ""
-        echo -e "${RED}❌ Failed to create scheduler job${NC}"
-        exit 1
+        echo "📅 Creating new scheduler job..."
+        echo "   Schedule: Every day at 9:00 AM UTC"
+        echo "   Game Type: ${GAME_TYPE}"
+        
+        gcloud scheduler jobs create http ${JOB_NAME} \
+          --location=${REGION} \
+          --schedule="0 9 * * *" \
+          --uri="${FUNCTION_URL}" \
+          --http-method=POST \
+          --message-body="{\"gameType\":\"${GAME_TYPE}\"}" \
+          --headers="Content-Type=application/json" \
+          --time-zone="UTC" \
+          --description="${DESCRIPTION}" \
+          --attempt-deadline=600s
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✅ Job created successfully!${NC}"
+        else
+            echo -e "${RED}❌ Failed to create job${NC}"
+            return 1
+        fi
     fi
-fi
+}
+
+# Create/update both scheduler jobs
+create_or_update_job "daily-puzzle-sudoku" "MINI_SUDOKU_6X6" "Daily Sudoku puzzle generation at 9:00 AM UTC"
+create_or_update_job "daily-puzzle-zip" "ZIP" "Daily ZIP puzzle generation at 9:00 AM UTC"
 
 echo ""
-echo "📊 Scheduler Details:"
-echo "===================="
-gcloud scheduler jobs describe ${JOB_NAME} \
-  --location=${REGION} \
-  --format="yaml(name,schedule,timeZone,httpTarget.uri,state)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📊 All Scheduler Jobs:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+gcloud scheduler jobs list --location=${REGION} --format="table(name,schedule,state,httpTarget.uri)"
 
 echo ""
-echo -e "${BLUE}🧪 Test the scheduler manually:${NC}"
-echo "  gcloud scheduler jobs run ${JOB_NAME} --location=${REGION}"
+echo -e "${BLUE}🧪 Test the schedulers manually:${NC}"
+echo "  gcloud scheduler jobs run daily-puzzle-sudoku --location=${REGION}"
+echo "  gcloud scheduler jobs run daily-puzzle-zip --location=${REGION}"
 echo ""
 echo -e "${BLUE}📋 View scheduler logs:${NC}"
 echo "  gcloud logging read \"resource.type=cloud_scheduler_job\" --limit=20"
 echo ""
 echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo ""
-echo "Your puzzles will now generate automatically every day at 9:00 AM UTC!"
-echo "Check Firestore tomorrow to see the new puzzle."
+echo "Both Sudoku and ZIP puzzles will now generate automatically every day at 9:00 AM UTC!"
+echo "Check Firestore tomorrow to see the new puzzles."
 
 
