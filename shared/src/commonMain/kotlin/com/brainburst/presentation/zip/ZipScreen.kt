@@ -1,5 +1,6 @@
 package com.brainburst.presentation.zip
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -227,6 +228,8 @@ fun ZipScreen(viewModel: ZipViewModel) {
                     gridSize = uiState.gridSize,
                     dots = uiState.dots,
                     path = uiState.path,
+                    hintPosition = uiState.hintPosition,
+                    hintType = uiState.hintType,
                     onDragStart = { position -> viewModel.onDragStart(position) },
                     onDragMove = { position -> viewModel.onDragMove(position) },
                     onDragEnd = { viewModel.onDragEnd() },
@@ -282,9 +285,11 @@ fun ZipScreen(viewModel: ZipViewModel) {
 
 @Composable
 fun ZipGrid(
-    gridSize: Int,
+    @Suppress("UNUSED_PARAMETER") gridSize: Int,
     dots: List<ZipDotUi>,
     path: List<Position>,
+    hintPosition: Position?,
+    hintType: HintType,
     onDragStart: (Position) -> Unit,
     onDragMove: (Position) -> Unit,
     onDragEnd: () -> Unit,
@@ -344,12 +349,15 @@ fun ZipGrid(
                             val dot = dots.find { it.position == position }
                             val isInPath = path.contains(position)
                             val pathIndex = path.indexOf(position)
+                            val isHinted = position == hintPosition
                             
                             ZipCell(
                                 position = position,
                                 dot = dot,
                                 isInPath = isInPath,
                                 isLastInPath = pathIndex == path.size - 1,
+                                isHinted = isHinted,
+                                hintType = hintType,
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxHeight()
@@ -376,17 +384,42 @@ private fun offsetToPosition(offset: Offset, gridSize: IntSize, cellCount: Int):
 
 @Composable
 fun ZipCell(
-    position: Position,
+    @Suppress("UNUSED_PARAMETER") position: Position,
     dot: ZipDotUi?,
     isInPath: Boolean,
     isLastInPath: Boolean,
+    isHinted: Boolean,
+    hintType: HintType,
     modifier: Modifier = Modifier
 ) {
+    // Pulsing animation for hint
+    val infiniteTransition = rememberInfiniteTransition()
+    val hintAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
     val backgroundColor = when {
+        isHinted && hintType == HintType.NextCell -> Color(0xFF4CAF50).copy(alpha = hintAlpha)
+        isHinted && hintType == HintType.UndoSegment -> Color(0xFFFF5722).copy(alpha = hintAlpha)
+        isHinted && hintType == HintType.NextDot -> Color(0xFFFFA726).copy(alpha = hintAlpha)
         isLastInPath -> Color(0xFF1098FA).copy(alpha = 0.3f)
         isInPath -> Color(0xFF1098FA).copy(alpha = 0.15f)
         else -> Color.Transparent
     }
+    
+    val borderColor = when {
+        isHinted && hintType == HintType.NextCell -> Color(0xFF4CAF50)
+        isHinted && hintType == HintType.UndoSegment -> Color(0xFFFF5722)
+        isHinted && hintType == HintType.NextDot -> Color(0xFFFFA726)
+        else -> Color(0xFFE0E0E0)
+    }
+    
+    val borderWidth = if (isHinted) 2.dp else 1.dp
     
     Box(
         modifier = modifier
@@ -394,8 +427,8 @@ fun ZipCell(
             .clip(RoundedCornerShape(4.dp))
             .background(backgroundColor)
             .border(
-                width = 1.dp,
-                color = Color(0xFFE0E0E0),
+                width = borderWidth,
+                color = borderColor,
                 shape = RoundedCornerShape(4.dp)
             ),
         contentAlignment = Alignment.Center
