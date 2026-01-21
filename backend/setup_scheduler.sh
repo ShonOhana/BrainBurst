@@ -72,7 +72,7 @@ create_or_update_job() {
         
         gcloud scheduler jobs update http ${JOB_NAME} \
           --location=${REGION} \
-          --schedule="0 9 * * *" \
+          --schedule="0 8 * * *" \
           --uri="${FUNCTION_URL}" \
           --http-method=POST \
           --message-body="{\"gameType\":\"${GAME_TYPE}\"}" \
@@ -88,7 +88,7 @@ create_or_update_job() {
         
         gcloud scheduler jobs create http ${JOB_NAME} \
           --location=${REGION} \
-          --schedule="0 9 * * *" \
+          --schedule="0 8 * * *" \
           --uri="${FUNCTION_URL}" \
           --http-method=POST \
           --message-body="{\"gameType\":\"${GAME_TYPE}\"}" \
@@ -107,8 +107,8 @@ create_or_update_job() {
 }
 
 # Create/update both scheduler jobs
-create_or_update_job "daily-puzzle-sudoku" "MINI_SUDOKU_6X6" "Daily Sudoku puzzle generation at 9:00 AM UTC"
-create_or_update_job "daily-puzzle-zip" "ZIP" "Daily ZIP puzzle generation at 9:00 AM UTC"
+create_or_update_job "daily-puzzle-sudoku" "MINI_SUDOKU_6X6" "Daily Sudoku puzzle generation at 8:00 AM UTC"
+create_or_update_job "daily-puzzle-zip" "ZIP" "Daily ZIP puzzle generation at 8:00 AM UTC"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -126,7 +126,7 @@ echo "  gcloud logging read \"resource.type=cloud_scheduler_job\" --limit=20"
 echo ""
 echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo ""
-echo "Both Sudoku and ZIP puzzles will now generate automatically every day at 9:00 AM UTC!"
+echo "Both Sudoku and ZIP puzzles will now generate automatically every day at 8:00 AM UTC!"
 echo "Check Firestore tomorrow to see the new puzzles."
 
 

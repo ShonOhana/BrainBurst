@@ -1,5 +1,6 @@
 """ZIP puzzle generator - connect numbered dots on 6x6 grid"""
 import random
+import time
 from typing import Dict, Any, List, Tuple, Set, Optional
 
 
@@ -45,17 +46,28 @@ class ZipGenerator:
         """
         Generate dots that can be connected by a path that fills all 36 cells.
         
-        Strategy: Generate a Hamiltonian path (visits all cells exactly once),
-        then place dots along it.
+        Strategy: Time-boxed Hamiltonian path with safe fallback
+        - Tries to find interesting Hamiltonian paths (3 second limit)
+        - Falls back to snake pattern if timeout
+        - Best of both worlds: variety + reliability
         """
-        max_attempts = 100
+        # Try Hamiltonian with timeout
+        start_time = time.time()
+        timeout = 3.0  # 3 second limit
+        max_attempts = 15  # Try multiple starting positions
         
         for attempt in range(max_attempts):
-            # Generate a path that visits all 36 cells
-            path = self._generate_hamiltonian_path()
+            # Check timeout
+            if time.time() - start_time > timeout:
+                print(f"   Hamiltonian timeout after {attempt} attempts, using fallback")
+                break
             
-            if path and len(path) == 36:  # Must visit all cells
-                # Place dots at selected positions along the path
+            # Try to generate Hamiltonian path
+            path = self._try_hamiltonian_path(start_time, timeout)
+            
+            if path and len(path) == 36:
+                print(f"   ✅ Found Hamiltonian path on attempt {attempt + 1}")
+                # Select dot positions along the path
                 dot_positions = self._select_dot_positions(path, num_dots)
                 
                 # Convert to dot format
@@ -69,84 +81,174 @@ class ZipGenerator:
                 
                 return dots
         
-        # Fallback: simple snake pattern (guaranteed to work)
+        # Fallback to snake pattern (guaranteed to work)
+        print("   Using snake pattern fallback")
         return self._generate_snake_dots(num_dots)
     
-    def _generate_hamiltonian_path(self) -> List[Tuple[int, int]]:
+    def _try_hamiltonian_path(self, start_time: float, timeout: float) -> Optional[List[Tuple[int, int]]]:
         """
-        Generate a path that visits all 36 cells exactly once.
-        Uses backtracking to find a Hamiltonian path.
+        Try to find a Hamiltonian path with timeout protection.
+        Uses Warnsdorff's heuristic for faster search.
         """
-        # Try different starting positions
+        # Random starting position (corners and edges work best)
         start_positions = [
             (0, 0), (0, 5), (5, 0), (5, 5),  # corners
-            (0, 2), (2, 0), (2, 5), (5, 2),  # edges
-            (2, 2), (3, 3)  # middle
+            (0, 2), (0, 3),                   # top edge
+            (5, 2), (5, 3),                   # bottom edge
+            (2, 0), (3, 0),                   # left edge
+            (2, 5), (3, 5)                    # right edge
         ]
         
-        random.shuffle(start_positions)
+        start_pos = random.choice(start_positions)
+        path = [start_pos]
+        visited = {start_pos}
         
-        for start_pos in start_positions:
-            path = [start_pos]
-            visited = {start_pos}
-            
-            if self._find_hamiltonian_path_recursive(path, visited):
-                return path
+        # Use backtracking with Warnsdorff's heuristic
+        if self._hamiltonian_backtrack(path, visited, start_time, timeout):
+            return path
         
-        # If no Hamiltonian path found, return snake pattern
-        return self._generate_snake_path()
+        return None
     
-    def _find_hamiltonian_path_recursive(
+    def _hamiltonian_backtrack(
         self, 
         path: List[Tuple[int, int]], 
         visited: Set[Tuple[int, int]],
-        max_depth: int = 36
+        start_time: float,
+        timeout: float
     ) -> bool:
         """
-        Recursively find a Hamiltonian path using backtracking.
+        Backtracking algorithm with Warnsdorff's heuristic and timeout.
         """
-        if len(path) == 36:
-            return True  # Found complete path
+        # Check timeout
+        if time.time() - start_time > timeout:
+            return False
         
-        if len(path) >= max_depth:
-            return False  # Depth limit
+        # Success: visited all cells
+        if len(path) == 36:
+            return True
         
         current = path[-1]
+        
+        # Get neighbors and sort by Warnsdorff's rule
+        # (visit cells with fewer unvisited neighbors first)
         neighbors = self._get_adjacent_cells(current[0], current[1])
         
-        # Randomize order for variety
-        random.shuffle(neighbors)
-        
+        # Filter unvisited and score by accessibility
+        candidates = []
         for neighbor in neighbors:
             if neighbor not in visited:
-                path.append(neighbor)
-                visited.add(neighbor)
-                
-                if self._find_hamiltonian_path_recursive(path, visited, max_depth):
-                    return True
-                
-                # Backtrack
-                path.pop()
-                visited.remove(neighbor)
+                # Count unvisited neighbors of this neighbor
+                next_neighbors = self._get_adjacent_cells(neighbor[0], neighbor[1])
+                accessibility = sum(1 for n in next_neighbors if n not in visited)
+                candidates.append((accessibility, neighbor))
+        
+        # Sort by accessibility (lower is better - visit "harder" cells first)
+        candidates.sort(key=lambda x: (x[0], random.random()))
+        
+        # Try each candidate
+        for _, neighbor in candidates:
+            path.append(neighbor)
+            visited.add(neighbor)
+            
+            if self._hamiltonian_backtrack(path, visited, start_time, timeout):
+                return True
+            
+            # Backtrack
+            path.pop()
+            visited.remove(neighbor)
         
         return False
     
-    def _generate_snake_path(self) -> List[Tuple[int, int]]:
+    def _generate_winding_path(self) -> List[Tuple[int, int]]:
         """
-        Generate a simple snake pattern that visits all cells.
-        Guaranteed to work as a fallback.
+        Generate a randomized winding path (LinkedIn Tango style).
+        Creates natural, curved patterns with directional preference.
+        Guaranteed to visit all 36 cells and fast to compute.
         """
-        path = []
+        # Random starting corner/edge
+        start_positions = [
+            (0, 0), (0, 5), (5, 0), (5, 5),  # corners
+            (0, random.randint(1, 4)),        # top edge
+            (5, random.randint(1, 4)),        # bottom edge
+            (random.randint(1, 4), 0),        # left edge
+            (random.randint(1, 4), 5)         # right edge
+        ]
         
-        for row in range(self.size):
-            if row % 2 == 0:
-                # Left to right
-                for col in range(self.size):
-                    path.append((row, col))
+        start = random.choice(start_positions)
+        path = [start]
+        visited = {start}
+        
+        # Directions: right, down, left, up
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        current_direction = random.randint(0, 3)
+        
+        # Directional momentum - prefer continuing in same direction
+        momentum = 0
+        
+        while len(path) < 36:
+            current_pos = path[-1]
+            found_next = False
+            
+            # Try directions with preference for current direction
+            direction_attempts = []
+            
+            # High momentum: strongly prefer current direction
+            if momentum > 2:
+                direction_attempts = [current_direction] * 4 + [(current_direction + i) % 4 for i in [1, 3, 2]]
+            # Some momentum: prefer current direction
+            elif momentum > 0:
+                direction_attempts = [current_direction] * 2 + [(current_direction + i) % 4 for i in [1, 3, 2]]
+            # No momentum: allow more turning
             else:
-                # Right to left
-                for col in range(self.size - 1, -1, -1):
-                    path.append((row, col))
+                direction_attempts = [current_direction] + [(current_direction + i) % 4 for i in [1, 2, 3]]
+            
+            for dir_idx in direction_attempts:
+                dr, dc = directions[dir_idx]
+                new_pos = (current_pos[0] + dr, current_pos[1] + dc)
+                
+                # Check if valid and unvisited
+                if (0 <= new_pos[0] < self.size and 
+                    0 <= new_pos[1] < self.size and 
+                    new_pos not in visited):
+                    
+                    path.append(new_pos)
+                    visited.add(new_pos)
+                    
+                    # Update momentum
+                    if dir_idx == current_direction:
+                        momentum = min(momentum + 1, 5)  # Build momentum
+                    else:
+                        current_direction = dir_idx
+                        momentum = 0  # Reset on turn
+                    
+                    found_next = True
+                    break
+            
+            # If stuck, find any available neighbor
+            if not found_next:
+                for dr, dc in directions:
+                    new_pos = (current_pos[0] + dr, current_pos[1] + dc)
+                    if (0 <= new_pos[0] < self.size and 
+                        0 <= new_pos[1] < self.size and 
+                        new_pos not in visited):
+                        path.append(new_pos)
+                        visited.add(new_pos)
+                        current_direction = directions.index((dr, dc))
+                        momentum = 0
+                        found_next = True
+                        break
+            
+            # If still stuck, backtrack
+            if not found_next and len(path) < 36:
+                # This shouldn't happen often, but fallback to snake if needed
+                if len(path) < 10:
+                    return self._generate_snake_path()
+                # Try to continue from a different visited cell
+                break
+        
+        # If we didn't visit all cells, fill remaining with snake pattern
+        if len(path) < 36:
+            return self._generate_snake_path()
         
         return path
     
@@ -191,6 +293,25 @@ class ZipGenerator:
         indices[-1] = len(path) - 1
         
         return [path[i] for i in indices]
+    
+    def _generate_snake_path(self) -> List[Tuple[int, int]]:
+        """
+        Generate a simple snake pattern that visits all cells.
+        Guaranteed to work as a fallback.
+        """
+        path = []
+        
+        for row in range(self.size):
+            if row % 2 == 0:
+                # Left to right
+                for col in range(self.size):
+                    path.append((row, col))
+            else:
+                # Right to left
+                for col in range(self.size - 1, -1, -1):
+                    path.append((row, col))
+        
+        return path
     
     def _generate_snake_dots(self, num_dots: int) -> List[Dict[str, int]]:
         """
