@@ -5,7 +5,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.CheckCircle
@@ -89,6 +102,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -287,10 +301,7 @@ fun GameCard(
                 Row(
                     modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = if (gameState is GameStateUI.Available && isGradientGame) 
-                        Alignment.CenterVertically 
-                    else 
-                        Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Add GameIcon on Android only
                     if (isAndroid) {
@@ -307,54 +318,43 @@ fun GameCard(
                     ) {
                         if (gameState is GameStateUI.Available && isGradientGame) {
                             // For Available gradient games (SUDOKU and ZIP)
-                            val titleParts = gameState.title.split(" ")
-                            // Only split into multiple lines if title has multiple words (like "Mini Sudoku 6x6")
-                            if (titleParts.size > 1) {
-                                Text(
-                                    text = titleParts.getOrElse(0) { "" },
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textColor
-                                )
-                                Text(
-                                    text = titleParts.getOrElse(1) { "" },
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textColor
-                                )
-                                Text(
-                                    text = titleParts.getOrElse(2) { "" }.replace("×", "x"),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textColor
-                                )
-                            } else {
-                                // Single word title (like "Zip"), show as single line
-                                Text(
-                                    text = gameState.title,
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textColor
-                                )
-                            }
+                            // Show title as single line, centered vertically
+                            Text(
+                                text = if (gameState.gameType == GameType.MINI_SUDOKU_6X6) "Mini Sudoku" else gameState.title,
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontSize = MaterialTheme.typography.headlineMedium.fontSize * 0.85f
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                color = textColor,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         } else {
                             // Title for other states or non-gradient games
                             Text(
                                 modifier = if (shouldUseGradient) Modifier else Modifier.alpha(0.5f),
-                                text = gameState.title,
-                                style = MaterialTheme.typography.headlineSmall,
+                                text = if (gameState.gameType == GameType.MINI_SUDOKU_6X6) "Mini Sudoku" else gameState.title,
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontSize = MaterialTheme.typography.headlineSmall.fontSize * 0.85f
+                                ),
                                 fontWeight = FontWeight.Bold,
-                                color = textColor
+                                color = textColor,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
                         // Date (for Available and Completed states)
                         if (gameState is GameStateUI.Available && gameState.formattedDate.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = gameState.formattedDate,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = textColor.copy(alpha = 0.8f)
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f
+                                ),
+                                color = textColor.copy(alpha = 0.8f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -381,9 +381,12 @@ fun GameCard(
                             ) {
                                 Text(
                                     text = "Play now",
-                                    style = MaterialTheme.typography.labelLarge,
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontSize = MaterialTheme.typography.labelLarge.fontSize * 0.9f
+                                    ),
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Black
+                                    color = Color.Black,
+                                    maxLines = 1
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
@@ -511,7 +514,7 @@ fun GameIcon(
         when (gameType) {
             GameType.MINI_SUDOKU_6X6 -> {
                 Image(
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(20.dp),
                     painter = painterResource(Res.drawable.sudoku_icon),
                     contentDescription = "Description",
                     colorFilter = tintColor?.let { androidx.compose.ui.graphics.ColorFilter.tint(it) }

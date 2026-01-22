@@ -194,75 +194,46 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Time
-                            Row(
-                                verticalAlignment = Alignment.Bottom,
-                                horizontalArrangement = Arrangement.Center,
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.End,
-                                    modifier = Modifier.padding(bottom = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "🕐",
-                                        fontSize = 20.sp
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text(
-                                        text = "Time",
-                                        fontSize = 10.sp,
-                                        color = Color(0xFF9E9E9E)
-                                    )
-                                    Text(
-                                        text = uiState.elapsedTimeFormatted,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1A1A1A)
-                                    )
-                                }
+                                Text(
+                                    text = uiState.elapsedTimeFormatted,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6200EA)
+                                )
+                                Text(
+                                    text = "Time",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
                             }
                             
-                            // Divider
-                            Box(
+                            Divider(
                                 modifier = Modifier
-                                    .height(40.dp)
-                                    .width(1.dp)
-                                    .background(Color(0xFFE0E0E0))
+                                    .height(24.dp)
+                                    .width(1.dp),
+                                color = Color(0xFFE0E0E0)
                             )
                             
                             // Moves
-                            Row(
-                                verticalAlignment = Alignment.Bottom,
-                                horizontalArrangement = Arrangement.Center,
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.End,
-                                    modifier = Modifier.padding(bottom = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "#",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF6200EA)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text(
-                                        text = "Moves",
-                                        fontSize = 10.sp,
-                                        color = Color(0xFF9E9E9E)
-                                    )
-                                    Text(
-                                        text = uiState.movesCount.toString(),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1A1A1A)
-                                    )
-                                }
+                                Text(
+                                    text = uiState.movesCount.toString(),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6200EA)
+                                )
+                                Text(
+                                    text = "Moves",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
                             }
                         }
                     }
