@@ -273,6 +273,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         )
     }
     
+    // Logout Confirmation Dialog
+    if (uiState.showLogoutDialog) {
+        LogoutConfirmationDialog(
+            onConfirm = { viewModel.onLogoutConfirm() },
+            onDismiss = { viewModel.onLogoutCancel() }
+        )
+    }
+    
     // Change Password Bottom Sheet
     if (uiState.showChangePasswordSheet) {
         ChangePasswordBottomSheet(
@@ -770,6 +778,51 @@ fun PermissionDeniedDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Not Now")
+            }
+        }
+    )
+}
+
+@Composable
+fun LogoutConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = null,
+                tint = Color(0xFFFF3B30),
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Log Out?",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "Are you sure you want to log out of your account?",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF3B30)
+                )
+            ) {
+                Text("Log Out")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
     )

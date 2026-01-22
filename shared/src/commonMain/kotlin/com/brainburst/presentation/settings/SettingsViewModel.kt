@@ -23,7 +23,8 @@ data class SettingsUiState(
     val isUpdatingPassword: Boolean = false,
     val passwordUpdateError: String? = null,
     val passwordUpdateSuccess: Boolean = false,
-    val permissionDenied: Boolean = false
+    val permissionDenied: Boolean = false,
+    val showLogoutDialog: Boolean = false
 )
 
 class SettingsViewModel(
@@ -266,7 +267,19 @@ class SettingsViewModel(
     }
     
     fun onLogoutClick() {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        // Show confirmation dialog first
+        _uiState.value = _uiState.value.copy(
+            showLogoutDialog = true,
+            errorMessage = null
+        )
+    }
+    
+    fun onLogoutConfirm() {
+        _uiState.value = _uiState.value.copy(
+            showLogoutDialog = false,
+            isLoading = true,
+            errorMessage = null
+        )
         
         viewModelScope.launch {
             val result = authRepository.signOut()
@@ -284,5 +297,12 @@ class SettingsViewModel(
                 }
             )
         }
+    }
+    
+    fun onLogoutCancel() {
+        _uiState.value = _uiState.value.copy(
+            showLogoutDialog = false,
+            errorMessage = null
+        )
     }
 }
