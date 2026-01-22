@@ -50,15 +50,15 @@ fun ZipScreen(viewModel: ZipViewModel) {
         }
     }
     
-    // Blue gradient background (different from Sudoku's purple)
+    // Purple gradient background (matching Sudoku)
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFD5E8FF),
-                        Color(0xFFBBD8FF)
+                        Color(0xFFE8D5FF),
+                        Color(0xFFD8BBFF)
                     )
                 )
             )
@@ -109,16 +109,16 @@ fun ZipScreen(viewModel: ZipViewModel) {
                         onClick = { viewModel.onBackPress() },
                         modifier = Modifier.size(40.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF0062EA),
-                            modifier = Modifier.size(24.dp)
-                        )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF6200EA),
+                                modifier = Modifier.size(24.dp)
+                            )
                     }
                 }
                 
-                // Title
+                // Title with gradient (matching Sudoku)
                 Text(
                     text = "Zip",
                     style = TextStyle(
@@ -126,7 +126,7 @@ fun ZipScreen(viewModel: ZipViewModel) {
                         fontWeight = FontWeight.Bold,
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                Color(0xFF1098FA),
+                                Color(0xFF9810FA),
                                 Color(0xFF155DFC)
                             )
                         )
@@ -135,9 +135,9 @@ fun ZipScreen(viewModel: ZipViewModel) {
                 
                 // Subtitle
                 Text(
-                    text = "Connect the Dots",
+                    text = "Form words by connecting letters",
                     fontSize = 12.sp,
-                    color = Color(0xFF0062EA).copy(alpha = 0.7f)
+                    color = Color(0xFF6200EA).copy(alpha = 0.7f)
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -159,16 +159,20 @@ fun ZipScreen(viewModel: ZipViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Time
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.Center,
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
                                 text = uiState.elapsedTimeFormatted,
-                                fontSize = 22.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0062EA)
+                                color = Color(0xFF6200EA)
+                            )
+                            Text(
+                                text = "Time",
+                                fontSize = 10.sp,
+                                color = Color(0xFF9E9E9E)
                             )
                         }
                         
@@ -188,12 +192,12 @@ fun ZipScreen(viewModel: ZipViewModel) {
                                 text = "${uiState.lastConnectedDotIndex} / ${uiState.dots.size}",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0062EA)
+                                color = Color(0xFF6200EA)
                             )
                             Text(
-                                text = "Dots",
+                                text = "Connected",
                                 fontSize = 10.sp,
-                                color = Color(0xFF666666)
+                                color = Color(0xFF9E9E9E)
                             )
                         }
                         
@@ -213,12 +217,12 @@ fun ZipScreen(viewModel: ZipViewModel) {
                                 text = "${uiState.movesCount}",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0062EA)
+                                color = Color(0xFF6200EA)
                             )
                             Text(
                                 text = "Moves",
                                 fontSize = 10.sp,
-                                color = Color(0xFF666666)
+                                color = Color(0xFF9E9E9E)
                             )
                         }
                     }
@@ -246,34 +250,53 @@ fun ZipScreen(viewModel: ZipViewModel) {
                 // Control buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    // Hint button (matching Sudoku style)
                     Button(
                         onClick = { viewModel.onHintPress() },
-                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        modifier = Modifier.weight(1f).height(44.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFFA726)
+                            containerColor = Color(0xFF9810FA),
+                            contentColor = Color.White
                         ),
+                        shape = RoundedCornerShape(12.dp),
                         enabled = !uiState.isCompleted && uiState.path.size < 36
                     ) {
-                        Text("💡 Hint")
+                        Text(
+                            text = "💡",
+                            fontSize = 18.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Hint",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                     
+                    // Reset button
                     Button(
                         onClick = { viewModel.onResetPress() },
-                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        modifier = Modifier.weight(1f).height(44.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF666666)
+                            containerColor = Color.White,
+                            contentColor = Color.Black
                         ),
+                        shape = RoundedCornerShape(12.dp),
                         enabled = !uiState.isCompleted
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Reset",
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Reset")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Reset",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
                 
@@ -336,7 +359,7 @@ fun ZipGrid(
                             )
                             
                             drawLine(
-                                color = Color(0xFFFF5722),
+                                color = Color(0xFF9810FA), // Purple line
                                 start = startOffset,
                                 end = endOffset,
                                 strokeWidth = 12f,
@@ -439,8 +462,8 @@ fun ZipCell(
         isHinted && hintType == HintType.NextCell -> Color(0xFF4CAF50).copy(alpha = hintAlpha)
         isHinted && hintType == HintType.UndoSegment -> Color(0xFFFF5722).copy(alpha = hintAlpha)
         isHinted && hintType == HintType.NextDot -> Color(0xFFFFA726).copy(alpha = hintAlpha)
-        isLastInPath -> Color(0xFF1098FA).copy(alpha = 0.3f)
-        isInPath -> Color(0xFF1098FA).copy(alpha = 0.15f)
+        isLastInPath -> Color(0xFF9810FA).copy(alpha = 0.3f)
+        isInPath -> Color(0xFF9810FA).copy(alpha = 0.15f)
         else -> Color.Transparent
     }
     
@@ -466,12 +489,12 @@ fun ZipCell(
         contentAlignment = Alignment.Center
     ) {
         if (dot != null) {
-            // Draw numbered dot
+            // Draw numbered dot with purple background
             Box(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF1098FA)),
+                    .background(Color(0xFF9810FA)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
