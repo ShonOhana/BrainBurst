@@ -29,7 +29,7 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
                 title = {
                     Column {
                         Text(
-                            text = "Leaderboard",
+                            text = "Results",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )

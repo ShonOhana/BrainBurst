@@ -51,11 +51,13 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import brainburst.shared.generated.resources.Res
+import brainburst.shared.generated.resources.leaderboard
 import brainburst.shared.generated.resources.sudoku_icon
 import brainburst.shared.generated.resources.tango_icon
 import brainburst.shared.generated.resources.zip_icon
@@ -363,38 +365,77 @@ fun GameCard(
                 // Right side: Buttons - take up right half of card
                 when (gameState) {
                     is GameStateUI.Available -> {
-                        // Pill-shaped button with light gray background and black text
-                        Button(
-                            onClick = onClick,
-                            modifier = Modifier
-                                .height(40.dp)
-                                .widthIn(min = 120.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE8E8E8), // Light gray/off-white
-                                contentColor = Color.Black
-                            ),
-                            shape = MaterialTheme.shapes.extraLarge // Pill shape
+                        // Two stacked buttons for available state - right half of card
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.End
                         ) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
+                            // Top button: Play now
+                            Button(
+                                onClick = onClick,
+                                modifier = Modifier
+                                    .height(51.dp)
+                                    .fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFE8E8E8), // Light gray/off-white
+                                    contentColor = Color.Black
+                                ),
+                                shape = MaterialTheme.shapes.extraLarge // Pill shape
                             ) {
-                                Text(
-                                    text = "Play now",
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontSize = MaterialTheme.typography.labelLarge.fontSize * 0.9f
-                                    ),
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
-                                    maxLines = 1
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Play now",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        modifier = Modifier.align(Alignment.CenterStart)
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(30.dp)
+                                            .align(Alignment.CenterEnd),
+                                        tint = Color.Black
+                                    )
+                                }
+                            }
+
+                            // Bottom button: Leaderboard (disabled)
+                            Button(
+                                onClick = {},
+                                modifier = Modifier
+                                    .height(51.dp)
+                                    .fillMaxWidth(),
+                                enabled = false,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = leaderboardButtonColor,
+                                    contentColor = Color.White,
+                                    disabledContainerColor = Color.White.copy(alpha = 0.6f),
+                                    disabledContentColor = Color.Black.copy(alpha = 0.5f)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = Color.Black
-                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Results",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.align(Alignment.CenterStart)
+                                    )
+                                    Image(
+                                        modifier = Modifier.size(20.dp).align(Alignment.CenterEnd),
+                                        painter = painterResource(Res.drawable.leaderboard),
+                                        contentDescription = "leaderboard",
+                                        colorFilter = ColorFilter.tint(Color.Black)
+                                    )
+                                }
                             }
                         }
                     }
@@ -431,29 +472,31 @@ fun GameCard(
                                     disabledContentColor = Color.Black
                                 )
                             ) {
-                                Row (
+                                Box(
                                     modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        modifier = Modifier.alpha(0.3f),
                                         text = timeUntil8UTC,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .alpha(0.3f)
+                                            .align(Alignment.CenterStart)
                                     )
                                     Icon(
                                         imageVector = Icons.Default.PlayArrow,
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(30.dp)
-                                            .alpha(0.3f),
-//                                            .align(Alignment.CenterEnd),
+                                            .alpha(0.3f)
+                                            .align(Alignment.CenterEnd),
                                         tint = Color.Unspecified
                                     )
                                 }
                             }
 
-                            // Bottom button: Leaderboard - same size as top button
+                            // Bottom button: Leaderboard (enabled)
                             Button(
                                 onClick = onClick,
                                 modifier = Modifier
@@ -464,15 +507,22 @@ fun GameCard(
                                     contentColor = Color.White
                                 )
                             ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "LeaderBoard",
+                                        text = "Results",
                                         color = Color.Black,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.align(Alignment.CenterStart)
+                                    )
+                                    Image(
+                                        modifier = Modifier.size(20.dp).align(Alignment.CenterEnd),
+                                        painter = painterResource(Res.drawable.leaderboard),
+                                        contentDescription = "leaderboard",
+                                        colorFilter = ColorFilter.tint(Color.Black)
                                     )
                                 }
                             }
