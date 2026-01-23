@@ -441,7 +441,7 @@ class ZipViewModel(
         
         viewModelScope.launch {
             // Show rewarded ad first
-//             adManager.showRewardedAd {
+             adManager.showRewardedAd {
                 viewModelScope.launch adCallback@{
                     // Use pre-calculated solution from payload
                     val solution = payloadData.solution.map { it.toPosition() }
@@ -499,7 +499,7 @@ class ZipViewModel(
                     
                     resumeTimer()
                 }
-//            }
+            }
         }
     }
 
