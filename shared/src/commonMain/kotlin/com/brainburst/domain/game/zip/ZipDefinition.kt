@@ -181,10 +181,9 @@ class ZipDefinition(
             return false
         }
         
-        // Must reach the last dot
+        // The LAST position must be the last dot
         val lastDotPos = payload.getDotPosition(payload.dotCount) ?: return false
-        
-        if (!state.containsPosition(lastDotPos)) {
+        if (state.lastPosition() != lastDotPos) {
             return false
         }
         
@@ -227,7 +226,11 @@ class ZipDefinition(
             }
         }
         
-        val completed = lastConnected == payload.dotCount
+        // Only complete if: all cells filled, all dots connected, AND last position is the last dot
+        val lastDotPos = payload.getDotPosition(payload.dotCount)
+        val completed = lastConnected == payload.dotCount && 
+                       state.path.size == payload.size * payload.size &&
+                       state.lastPosition() == lastDotPos
         
         return state.copy(
             lastConnectedDotIndex = lastConnected,

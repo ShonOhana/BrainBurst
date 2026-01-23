@@ -572,7 +572,7 @@ class ZipViewModel(
     private fun determineHint(
         state: ZipState,
         solution: List<Position>,
-        payload: ZipPayload
+        @Suppress("UNUSED_PARAMETER") payload: ZipPayload
     ): HintAction {
         // Edge case: puzzle complete
         if (state.isCompleted) return HintAction.NoHint
@@ -585,24 +585,17 @@ class ZipViewModel(
         // Find divergence point
         val divergenceIndex = findDivergence(state.path, solution)
         
-        // User is on correct path
+        // User is on correct path - show next cell
         if (divergenceIndex == state.path.size) {
-            // Check if next move is forced (only 1 valid continuation)
             val nextPos = solution.getOrNull(state.path.size)
-            if (nextPos != null && isForced(state, nextPos, solution, payload)) {
-                return HintAction.HighlightCell(nextPos)
+            return if (nextPos != null) {
+                HintAction.HighlightCell(nextPos)
+            } else {
+                HintAction.NoHint
             }
-            
-            // Multiple valid continuations - show next dot
-            val nextDotIndex = state.lastConnectedDotIndex + 1
-            if (nextDotIndex <= payload.dotCount) {
-                return HintAction.HighlightDot(nextDotIndex)
-            }
-            
-            return HintAction.NoHint  // User can explore
         }
         
-        // User diverged - suggest undo from divergence point
+        // User diverged - show first wrong cell for undo
         return HintAction.SuggestUndo(state.path[divergenceIndex])
     }
 
@@ -618,7 +611,7 @@ class ZipViewModel(
         
         viewModelScope.launch {
             // Show rewarded ad first
-            adManager.showRewardedAd {
+             adManager.showRewardedAd {
                 viewModelScope.launch adCallback@{
                     // Solve puzzle (use cached solution if available)
                     val solution = solutionCache ?: solvePuzzle(payloadData)?.also { 
@@ -630,6 +623,7 @@ class ZipViewModel(
                         println("ZIP HINT: No solution found!")
                         resumeTimer()
                         return@adCallback
+
                     }
                     
                     println("ZIP HINT: Solution found with ${solution.size} cells")

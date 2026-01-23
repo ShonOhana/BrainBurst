@@ -282,7 +282,7 @@ fun ZipScreen(viewModel: ZipViewModel) {
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = !uiState.isCompleted && uiState.path.size < 36
+                        enabled = !uiState.isCompleted
                     ) {
                         Text(
                             text = "💡",
