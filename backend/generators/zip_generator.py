@@ -10,8 +10,9 @@ class ZipGenerator:
     def __init__(self, openai_client=None):
         # openai_client parameter kept for API compatibility but not used
         self.size = 6
-        self.min_dots = 2
-        self.max_dots = 16
+        self.min_dots = 4  # Increased from 2 - harder
+        self.max_dots = 16  # Decreased from 16 - harder with fewer dots
+        self.wall_probability = 0.7  # 70% chance to add walls
     
     def generate_payload(self, date_str: str) -> Dict[str, Any]:
         """
@@ -35,16 +36,29 @@ class ZipGenerator:
         num_dots = random.randint(self.min_dots, self.max_dots)
         
         # Generate valid dot placements and solution path
-        dots = self._generate_valid_zip_puzzle(num_dots)
+        dots, solution_path = self._generate_valid_zip_puzzle(num_dots)
         
-        return {
+        # Maybe add walls (70% chance)
+        walls = []
+        if random.random() < self.wall_probability:
+            walls = self._generate_walls(solution_path)
+        
+        payload = {
             "size": self.size,
             "dots": dots
         }
+        
+        # Only add walls if we generated any
+        if walls:
+            payload["walls"] = walls
+        
+        return payload
     
-    def _generate_valid_zip_puzzle(self, num_dots: int) -> List[Dict[str, int]]:
+    def _generate_valid_zip_puzzle(self, num_dots: int) -> Tuple[List[Dict[str, int]], List[Tuple[int, int]]]:
         """
         Generate dots that can be connected by a path that fills all 36 cells.
+        
+        Returns: (dots, solution_path)
         
         Strategy: Time-boxed Hamiltonian path with safe fallback
         - Tries to find interesting Hamiltonian paths (3 second limit)
@@ -79,11 +93,11 @@ class ZipGenerator:
                         "index": i + 1
                     })
                 
-                return dots
+                return dots, path
         
         # Fallback to snake pattern (guaranteed to work)
         print("   Using snake pattern fallback")
-        return self._generate_snake_dots(num_dots)
+        return self._generate_snake_dots(num_dots), self._generate_snake_path()
     
     def _try_hamiltonian_path(self, start_time: float, timeout: float) -> Optional[List[Tuple[int, int]]]:
         """
@@ -333,3 +347,69 @@ class ZipGenerator:
             })
         
         return dots
+    
+    def _generate_walls(self, solution_path: List[Tuple[int, int]]) -> List[Dict[str, Any]]:
+        """
+        Generate walls that add difficulty but don't block the solution path.
+        
+        Strategy:
+        - Place walls on edges NOT used by the solution path
+        - Random placement with 15-30% coverage of available edges
+        - Creates barriers that make wrong paths more likely
+        """
+        # Build set of edges used by solution
+        solution_edges = set()
+        for i in range(len(solution_path) - 1):
+            curr = solution_path[i]
+            next_pos = solution_path[i + 1]
+            
+            # Record this edge (normalized so order doesn't matter)
+            edge = self._normalize_edge(curr, next_pos)
+            if edge:
+                solution_edges.add(edge)
+        
+        # Collect all possible edges in grid
+        all_edges = []
+        for row in range(self.size):
+            for col in range(self.size):
+                # Right edge (if not at right boundary)
+                if col < self.size - 1:
+                    edge = ((row, col), (row, col + 1))
+                    if edge not in solution_edges:
+                        all_edges.append((row, col, "RIGHT"))
+                
+                # Bottom edge (if not at bottom boundary)
+                if row < self.size - 1:
+                    edge = ((row, col), (row + 1, col))
+                    if edge not in solution_edges:
+                        all_edges.append((row, col, "BOTTOM"))
+        
+        # Randomly select 15-30% of available edges to place walls
+        num_walls = random.randint(int(len(all_edges) * 0.25), int(len(all_edges) * 0.45))
+        selected_edges = random.sample(all_edges, min(num_walls, len(all_edges)))
+        
+        walls = []
+        for row, col, side in selected_edges:
+            walls.append({
+                "row": row,
+                "col": col,
+                "side": side
+            })
+        
+        print(f"   Generated {len(walls)} walls (out of {len(all_edges)} available edges)")
+        return walls
+    
+    def _normalize_edge(self, pos1: Tuple[int, int], pos2: Tuple[int, int]) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        """
+        Normalize an edge so (A, B) and (B, A) are treated as the same edge.
+        Returns None if positions are not adjacent.
+        """
+        # Check if positions are adjacent
+        row_diff = abs(pos1[0] - pos2[0])
+        col_diff = abs(pos1[1] - pos2[1])
+        
+        if (row_diff == 1 and col_diff == 0) or (row_diff == 0 and col_diff == 1):
+            # Return edge with smaller position first
+            return tuple(sorted([pos1, pos2]))
+        
+        return None

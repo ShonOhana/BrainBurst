@@ -7,6 +7,8 @@ import com.brainburst.domain.game.ZipMove
 import com.brainburst.domain.game.zip.ZipDefinition
 import com.brainburst.domain.game.zip.ZipPayload
 import com.brainburst.domain.game.zip.ZipState
+import com.brainburst.domain.game.zip.WallSide
+import com.brainburst.domain.game.zip.ZipWall
 import com.brainburst.domain.model.GameType
 import com.brainburst.domain.model.ResultDto
 import com.brainburst.domain.repository.AuthRepository
@@ -26,6 +28,7 @@ import kotlinx.datetime.Clock
 data class ZipUiState(
     val gridSize: Int = 6,
     val dots: List<ZipDotUi> = emptyList(),
+    val walls: List<ZipWallUi> = emptyList(),
     val path: List<Position> = emptyList(),
     val lastConnectedDotIndex: Int = 0,
     val elapsedTimeFormatted: String = "00:00",
@@ -41,6 +44,12 @@ data class ZipUiState(
 data class ZipDotUi(
     val position: Position,
     val index: Int
+)
+
+data class ZipWallUi(
+    val row: Int,
+    val col: Int,
+    val side: WallSide
 )
 
 enum class HintType {
@@ -221,10 +230,19 @@ class ZipViewModel(
                 index = dot.index
             )
         }
+        
+        val wallsUi = payloadData.walls.map { wall ->
+            ZipWallUi(
+                row = wall.row,
+                col = wall.col,
+                side = wall.side
+            )
+        }
 
         _uiState.value = _uiState.value.copy(
             gridSize = payloadData.size,
             dots = dotsUi,
+            walls = wallsUi,
             path = state.path,
             lastConnectedDotIndex = state.lastConnectedDotIndex,
             movesCount = state.movesCount,
@@ -275,7 +293,7 @@ class ZipViewModel(
         
         // Apply move (forward)
         val move = ZipMove(position)
-        var newState = definition.applyMove(state, move)
+        var newState = definition.applyMoveWithWalls(state, move, payloadData)
         
         // Update dot progress
         newState = definition.updateDotProgress(newState, payloadData)
@@ -354,8 +372,8 @@ class ZipViewModel(
             val nextDotIndex = dotIndex + 1
             val nextDot = payload.getDotPosition(nextDotIndex)
             
-            // Get adjacent cells
-            val adjacent = getAdjacentPositions(current, gridSize)
+            // Get adjacent cells (respecting walls)
+            val adjacent = getAdjacentPositionsWithWalls(current, gridSize, payload.walls)
             
             // If we need to reach next dot, prioritize moves toward it
             val sortedAdjacent = if (nextDot != null && nextDotIndex <= payload.dotCount) {
@@ -376,7 +394,7 @@ class ZipViewModel(
                 // make sure we can still reach it
                 if (nextDot != null && !isNextDot && nextDotIndex <= payload.dotCount) {
                     // Check if we're blocking path to next dot
-                    if (!canStillReachDot(next, nextDot, visited, totalCells - solution.size - 1)) {
+                    if (!canStillReachDot(next, nextDot, visited, totalCells - solution.size - 1, payload.walls)) {
                         continue
                     }
                 }
@@ -404,7 +422,8 @@ class ZipViewModel(
         from: Position,
         target: Position,
         visited: Set<Position>,
-        @Suppress("UNUSED_PARAMETER") remainingCells: Int
+        @Suppress("UNUSED_PARAMETER") remainingCells: Int,
+        walls: List<ZipWall>
     ): Boolean {
         // Simple reachability check using BFS
         if (from == target) return true
@@ -416,7 +435,7 @@ class ZipViewModel(
         while (queue.isNotEmpty()) {
             val current = queue.removeAt(0)
             
-            for (next in getAdjacentPositions(current, 6)) {
+            for (next in getAdjacentPositionsWithWalls(current, 6, walls)) {
                 if (next in tempVisited) continue
                 
                 if (next == target) return true
@@ -430,15 +449,51 @@ class ZipViewModel(
     }
     
     /**
-     * Get adjacent positions (up, down, left, right)
+     * Get adjacent positions (up, down, left, right) that are not blocked by walls
      */
-    private fun getAdjacentPositions(pos: Position, gridSize: Int): List<Position> {
-        return listOf(
-            Position(pos.row - 1, pos.col),
-            Position(pos.row + 1, pos.col),
-            Position(pos.row, pos.col - 1),
-            Position(pos.row, pos.col + 1)
+    private fun getAdjacentPositionsWithWalls(pos: Position, gridSize: Int, walls: List<ZipWall>): List<Position> {
+        val candidates = listOf(
+            Position(pos.row - 1, pos.col),  // UP
+            Position(pos.row + 1, pos.col),  // DOWN
+            Position(pos.row, pos.col - 1),  // LEFT
+            Position(pos.row, pos.col + 1)   // RIGHT
         ).filter { it.row in 0 until gridSize && it.col in 0 until gridSize }
+        
+        // Filter out moves blocked by walls
+        return candidates.filter { next ->
+            !isBlockedByWall(pos, next, walls)
+        }
+    }
+    
+    /**
+     * Check if a move from 'from' to 'to' is blocked by a wall
+     */
+    private fun isBlockedByWall(from: Position, to: Position, walls: List<ZipWall>): Boolean {
+        val rowDiff = to.row - from.row
+        val colDiff = to.col - from.col
+        
+        for (wall in walls) {
+            // Check walls from the 'from' cell
+            if (wall.row == from.row && wall.col == from.col) {
+                when (wall.side) {
+                    WallSide.TOP -> if (rowDiff == -1 && colDiff == 0) return true
+                    WallSide.RIGHT -> if (rowDiff == 0 && colDiff == 1) return true
+                    WallSide.BOTTOM -> if (rowDiff == 1 && colDiff == 0) return true
+                    WallSide.LEFT -> if (rowDiff == 0 && colDiff == -1) return true
+                }
+            }
+            // Check walls from the 'to' cell (opposite sides)
+            if (wall.row == to.row && wall.col == to.col) {
+                when (wall.side) {
+                    WallSide.TOP -> if (rowDiff == 1 && colDiff == 0) return true
+                    WallSide.RIGHT -> if (rowDiff == 0 && colDiff == -1) return true
+                    WallSide.BOTTOM -> if (rowDiff == -1 && colDiff == 0) return true
+                    WallSide.LEFT -> if (rowDiff == 0 && colDiff == 1) return true
+                }
+            }
+        }
+        
+        return false
     }
     
     /**
@@ -463,7 +518,7 @@ class ZipViewModel(
         payload: ZipPayload
     ): Boolean {
         val current = state.lastPosition() ?: return false
-        val adjacent = getAdjacentPositions(current, payload.size)
+        val adjacent = getAdjacentPositionsWithWalls(current, payload.size, payload.walls)
         val unvisited = adjacent.filter { !state.containsPosition(it) }
         
         // Only one option available

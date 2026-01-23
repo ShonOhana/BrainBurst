@@ -73,6 +73,75 @@ class ZipDefinition(
         )
     }
     
+    /**
+     * Check if a move is blocked by a wall
+     */
+    private fun isBlockedByWall(from: Position, to: Position, walls: List<ZipWall>): Boolean {
+        // Determine direction of movement
+        val rowDiff = to.row - from.row
+        val colDiff = to.col - from.col
+        
+        // Check walls from the 'from' cell
+        for (wall in walls) {
+            if (wall.row == from.row && wall.col == from.col) {
+                when (wall.side) {
+                    WallSide.TOP -> if (rowDiff == -1 && colDiff == 0) return true
+                    WallSide.RIGHT -> if (rowDiff == 0 && colDiff == 1) return true
+                    WallSide.BOTTOM -> if (rowDiff == 1 && colDiff == 0) return true
+                    WallSide.LEFT -> if (rowDiff == 0 && colDiff == -1) return true
+                }
+            }
+            // Check walls from the 'to' cell (opposite sides)
+            if (wall.row == to.row && wall.col == to.col) {
+                when (wall.side) {
+                    WallSide.TOP -> if (rowDiff == 1 && colDiff == 0) return true
+                    WallSide.RIGHT -> if (rowDiff == 0 && colDiff == -1) return true
+                    WallSide.BOTTOM -> if (rowDiff == -1 && colDiff == 0) return true
+                    WallSide.LEFT -> if (rowDiff == 0 && colDiff == 1) return true
+                }
+            }
+        }
+        
+        return false
+    }
+    
+    /**
+     * Apply move with wall checking (for ViewModel use)
+     */
+    fun applyMoveWithWalls(state: ZipState, move: GameMove, payload: ZipPayload): ZipState {
+        require(move is ZipMove) { "Move must be a ZipMove" }
+        
+        // Cannot move if already completed
+        if (state.isCompleted) {
+            return state
+        }
+        
+        val lastPos = state.lastPosition() ?: return state
+        
+        // Check if move is orthogonally adjacent
+        if (!isAdjacent(lastPos, move.position)) {
+            return state // Invalid move, not adjacent
+        }
+        
+        // Check if position was already visited
+        if (state.containsPosition(move.position)) {
+            return state // Invalid move, revisiting cell
+        }
+        
+        // Check if move is blocked by wall
+        if (isBlockedByWall(lastPos, move.position, payload.walls)) {
+            return state // Invalid move, blocked by wall
+        }
+        
+        // Valid move - add to path
+        val newPath = state.path + move.position
+        
+        return state.copy(
+            path = newPath,
+            movesCount = state.movesCount + 1
+        )
+    }
+    
     override fun validateState(state: ZipState, payload: ZipPayload): ValidationResult {
         // Check which dot we should be at based on the path
         var expectedDotIndex = state.lastConnectedDotIndex

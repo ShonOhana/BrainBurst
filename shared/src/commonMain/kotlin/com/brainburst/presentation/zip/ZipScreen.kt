@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.TextStyle
 import com.brainburst.domain.game.Position
+import com.brainburst.domain.game.zip.WallSide
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -237,6 +238,7 @@ fun ZipScreen(viewModel: ZipViewModel) {
                     path = uiState.path,
                     hintPosition = uiState.hintPosition,
                     hintType = uiState.hintType,
+                    walls = uiState.walls,
                     onDragStart = { position -> viewModel.onDragStart(position) },
                     onDragMove = { position -> viewModel.onDragMove(position) },
                     onDragEnd = { viewModel.onDragEnd() },
@@ -319,6 +321,7 @@ fun ZipGrid(
     onDragStart: (Position) -> Unit,
     onDragMove: (Position) -> Unit,
     onDragEnd: () -> Unit,
+    walls: List<ZipWallUi> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     var gridSize by remember { mutableStateOf(IntSize.Zero) }
@@ -344,6 +347,7 @@ fun ZipGrid(
                     if (path.size > 1 && gridSize.width > 0 && gridSize.height > 0) {
                         val cellWidth = size.width / 6f
                         val cellHeight = size.height / 6f
+                        val lineWidth = minOf(cellWidth, cellHeight) * 0.55f // 75% of cell size
                         
                         for (i in 0 until path.size - 1) {
                             val start = path[i]
@@ -362,8 +366,47 @@ fun ZipGrid(
                                 color = Color(0xFF9810FA), // Purple line
                                 start = startOffset,
                                 end = endOffset,
-                                strokeWidth = 12f,
+                                strokeWidth = lineWidth,
                                 cap = StrokeCap.Round
+                            )
+                        }
+                    }
+                    
+                    // Draw walls
+                    if (walls.isNotEmpty() && gridSize.width > 0 && gridSize.height > 0) {
+                        val cellWidth = size.width / 6f
+                        val cellHeight = size.height / 6f
+                        val wallThickness = minOf(cellWidth, cellHeight) * 0.15f
+                        
+                        for (wall in walls) {
+                            val wallStart: Offset
+                            val wallEnd: Offset
+                            
+                            when (wall.side) {
+                                WallSide.TOP -> {
+                                    wallStart = Offset(wall.col * cellWidth, wall.row * cellHeight)
+                                    wallEnd = Offset((wall.col + 1) * cellWidth, wall.row * cellHeight)
+                                }
+                                WallSide.RIGHT -> {
+                                    wallStart = Offset((wall.col + 1) * cellWidth, wall.row * cellHeight)
+                                    wallEnd = Offset((wall.col + 1) * cellWidth, (wall.row + 1) * cellHeight)
+                                }
+                                WallSide.BOTTOM -> {
+                                    wallStart = Offset(wall.col * cellWidth, (wall.row + 1) * cellHeight)
+                                    wallEnd = Offset((wall.col + 1) * cellWidth, (wall.row + 1) * cellHeight)
+                                }
+                                WallSide.LEFT -> {
+                                    wallStart = Offset(wall.col * cellWidth, wall.row * cellHeight)
+                                    wallEnd = Offset(wall.col * cellWidth, (wall.row + 1) * cellHeight)
+                                }
+                            }
+                            
+                            drawLine(
+                                color = Color.Black,
+                                start = wallStart,
+                                end = wallEnd,
+                                strokeWidth = wallThickness,
+                                cap = StrokeCap.Square
                             )
                         }
                     }

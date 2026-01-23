@@ -10,7 +10,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ZipPayload(
     val size: Int = 6,  // Fixed 6x6 grid
-    val dots: List<ZipDot>  // Numbered dots to connect (1 to N)
+    val dots: List<ZipDot>,  // Numbered dots to connect (1 to N)
+    val walls: List<ZipWall> = emptyList()  // Wall barriers that block paths
 ) {
     init {
         require(size == 6) { "ZIP grid size must be 6" }
@@ -50,4 +51,23 @@ data class ZipDot(
     val index: Int  // 1 to N
 ) {
     fun toPosition(): Position = Position(row, col)
+}
+
+/**
+ * Represents a wall barrier on a cell edge
+ * Walls prevent paths from crossing between adjacent cells
+ */
+@Serializable
+data class ZipWall(
+    val row: Int,
+    val col: Int,
+    val side: WallSide  // Which edge of the cell has the wall
+)
+
+@Serializable
+enum class WallSide {
+    TOP,    // Wall on top edge (blocks movement to row-1)
+    RIGHT,  // Wall on right edge (blocks movement to col+1)
+    BOTTOM, // Wall on bottom edge (blocks movement to row+1)
+    LEFT    // Wall on left edge (blocks movement to col-1)
 }
