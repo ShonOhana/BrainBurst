@@ -31,12 +31,31 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.TextStyle
 import com.brainburst.domain.game.Position
 import com.brainburst.domain.game.zip.WallSide
+import com.brainburst.platform.PlatformLifecycleHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ZipScreen(viewModel: ZipViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val event by viewModel.events.collectAsState()
+    
+    // Lifecycle: Handle app background/foreground
+    PlatformLifecycleHandler(
+        onPause = {
+            viewModel.onAppPaused()
+        },
+        onResume = {
+            viewModel.onAppResumed()
+        }
+    )
+    
+    // Handle initial screen visibility - start timer when screen first appears
+    LaunchedEffect(Unit) {
+        // Start timer when screen first appears if puzzle is loaded
+        if (uiState.dots.isNotEmpty()) {
+            viewModel.onAppResumed()
+        }
+    }
     
     // Handle events
     LaunchedEffect(event) {
@@ -136,7 +155,7 @@ fun ZipScreen(viewModel: ZipViewModel) {
                 
                 // Subtitle
                 Text(
-                    text = "Form words by connecting letters",
+                    text = "Use pathfinding skills to move through the grid",
                     fontSize = 12.sp,
                     color = Color(0xFF6200EA).copy(alpha = 0.7f)
                 )

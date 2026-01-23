@@ -15,7 +15,9 @@ data class SavedGameState(
     val startedAtMillis: Long,
     val movesCount: Int,
     val elapsedMillisAtPause: Long,  // Total elapsed time when paused
-    val lastSavedAtMillis: Long       // When this state was saved
+    val lastSavedAtMillis: Long,     // When this state was saved
+    val path: List<SerializablePosition> = emptyList(),  // For ZIP game
+    val lastConnectedDotIndex: Int = 0  // For ZIP game
 )
 
 @Serializable
@@ -29,6 +31,8 @@ data class SerializablePosition(
 fun Position.toSerializable() = SerializablePosition(row, col)
 
 fun Set<Position>.toSerializable() = map { it.toSerializable() }
+
+fun List<Position>.toSerializable() = map { it.toSerializable() }
 
 
 

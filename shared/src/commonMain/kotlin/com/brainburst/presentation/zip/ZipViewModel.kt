@@ -11,6 +11,7 @@ import com.brainburst.domain.game.zip.WallSide
 import com.brainburst.domain.game.zip.ZipWall
 import com.brainburst.domain.model.GameType
 import com.brainburst.domain.model.ResultDto
+import com.brainburst.domain.model.toSerializable
 import com.brainburst.domain.repository.AuthRepository
 import com.brainburst.domain.repository.GameStateRepository
 import com.brainburst.domain.repository.PuzzleRepository
@@ -23,6 +24,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Clock
 
 data class ZipUiState(
@@ -135,6 +138,11 @@ class ZipViewModel(
                                 return@puzzleSuccess
                             }
 
+                            // If this is a different puzzle than before, clear old state
+                            if (puzzleId != null && puzzleId != puzzleDto.puzzleId) {
+                                gameStateRepository.clearGameState(puzzleId!!)
+                            }
+
                             puzzleId = puzzleDto.puzzleId
 
                             // Decode payload
@@ -142,9 +150,24 @@ class ZipViewModel(
                             zipDefinition = definition as ZipDefinition
                             payload = definition.decodePayload(puzzleDto.payload)
 
-                            // Initialize state (no saved state for MVP)
-                            currentState = definition.initialState(payload!!)
-                            elapsedMillisWhenPaused = 0L
+                            // Try to restore saved state
+                            val savedState = gameStateRepository.loadGameState(puzzleDto.puzzleId)
+
+                            if (savedState != null) {
+                                // Restore from saved state
+                                currentState = ZipState(
+                                    path = savedState.path.map { it.toPosition() },
+                                    lastConnectedDotIndex = savedState.lastConnectedDotIndex,
+                                    startedAtMillis = savedState.startedAtMillis,
+                                    movesCount = savedState.movesCount,
+                                    isCompleted = false
+                                )
+                                elapsedMillisWhenPaused = savedState.elapsedMillisAtPause
+                            } else {
+                                // Initialize fresh state
+                                currentState = definition.initialState(payload!!)
+                                elapsedMillisWhenPaused = 0L
+                            }
 
                             // Update UI
                             updateUiFromState()
@@ -193,9 +216,13 @@ class ZipViewModel(
         isTimerRunning = false
         timerJob?.cancel()
 
+        // Calculate elapsed time and add to paused total
         val now = Clock.System.now().toEpochMilliseconds()
         val sessionElapsed = now - timerStartedAtMillis
         elapsedMillisWhenPaused += sessionElapsed
+
+        // Save state when pausing
+        saveGameState()
     }
 
     private fun updateTimer() {
@@ -689,6 +716,7 @@ class ZipViewModel(
                 val result = submitResult(durationMs, state.movesCount)
                 result.fold(
                     onSuccess = {
+                        puzzleId?.let { gameStateRepository.clearGameState(it) }
                         adManager.showInterstitialAd {
                             navigator.navigateTo(Screen.Leaderboard(GameType.ZIP))
                         }
@@ -747,5 +775,105 @@ class ZipViewModel(
 
     fun onScreenHidden() {
         pauseTimer()
+    }
+
+    /**
+     * Called when the app goes to background (home button pressed, app switcher, etc.).
+     * This pauses the timer and saves state immediately.
+     */
+    fun onAppPaused() {
+        pauseTimer()
+        // Force save state when app goes to background
+        saveGameStateBlocking()
+    }
+
+    /**
+     * Called when the app comes back to foreground.
+     * This resumes the timer if the screen is still visible.
+     */
+    fun onAppResumed() {
+        // Only resume if we're still on the Zip screen and timer was running
+        // The screen visibility check ensures we don't resume if user navigated away
+        if (currentState != null && puzzleId != null) {
+            resumeTimer()
+        }
+    }
+
+    /**
+     * Called when the screen is stopped (onPause on Android, viewDidDisappear on iOS).
+     * This saves the game state when the user leaves the screen.
+     * Uses blocking save to ensure state is persisted even when the app is killed.
+     */
+    fun onScreenStopped() {
+        pauseTimer() // This calls saveGameState() async
+        // Also call blocking version to ensure save completes before process is killed
+        saveGameStateBlocking()
+    }
+
+    private fun saveGameState() {
+        val state = currentState ?: return
+        val id = puzzleId ?: return
+
+        viewModelScope.launch {
+            // Calculate current total elapsed time
+            val now = Clock.System.now().toEpochMilliseconds()
+            val sessionElapsed = if (isTimerRunning) now - timerStartedAtMillis else 0L
+            val totalElapsed = elapsedMillisWhenPaused + sessionElapsed
+
+            val savedState = com.brainburst.domain.model.SavedGameState(
+                puzzleId = id,
+                gameType = GameType.ZIP,
+                board = emptyList(), // ZIP doesn't use board
+                fixedCells = emptyList(),
+                startedAtMillis = state.startedAtMillis,
+                movesCount = state.movesCount,
+                elapsedMillisAtPause = totalElapsed,
+                lastSavedAtMillis = now,
+                path = state.path.toSerializable(),
+                lastConnectedDotIndex = state.lastConnectedDotIndex
+            )
+
+            gameStateRepository.saveGameState(savedState)
+        }
+    }
+
+    /**
+     * Blocking version of saveGameState for use in lifecycle callbacks.
+     * Uses runBlocking to ensure the save completes before the process is killed.
+     * This is important on Android when the app is backgrounded or killed.
+     */
+    private fun saveGameStateBlocking() {
+        val state = currentState ?: return
+        val id = puzzleId ?: return
+
+        runBlocking {
+            try {
+                withTimeout(1000) { // 1 second timeout to prevent hanging
+                    // Calculate current total elapsed time
+                    val now = Clock.System.now().toEpochMilliseconds()
+                    val sessionElapsed = if (isTimerRunning) now - timerStartedAtMillis else 0L
+                    val totalElapsed = elapsedMillisWhenPaused + sessionElapsed
+
+                    val savedState = com.brainburst.domain.model.SavedGameState(
+                        puzzleId = id,
+                        gameType = GameType.ZIP,
+                        board = emptyList(), // ZIP doesn't use board
+                        fixedCells = emptyList(),
+                        startedAtMillis = state.startedAtMillis,
+                        movesCount = state.movesCount,
+                        elapsedMillisAtPause = totalElapsed,
+                        lastSavedAtMillis = now,
+                        path = state.path.toSerializable(),
+                        lastConnectedDotIndex = state.lastConnectedDotIndex
+                    )
+
+                    gameStateRepository.saveGameState(savedState)
+                }
+            } catch (e: Exception) {
+                // Silently fail - if save doesn't complete, that's okay
+                // The user's progress might be lost, but we don't want to crash
+                // or hang the app shutdown process
+            }
+        }
     }
 }
