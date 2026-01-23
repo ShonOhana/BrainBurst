@@ -4,6 +4,7 @@ import com.brainburst.domain.model.User
 import com.brainburst.domain.notifications.NotificationManager
 import com.brainburst.domain.repository.AuthRepository
 import com.brainburst.domain.repository.PreferencesRepository
+import com.brainburst.domain.share.ShareManager
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,7 @@ class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val preferencesRepository: PreferencesRepository,
     private val notificationManager: NotificationManager,
+    private val shareManager: ShareManager,
     private val navigator: Navigator,
     private val viewModelScope: CoroutineScope
 ) {
@@ -304,5 +306,9 @@ class SettingsViewModel(
             showLogoutDialog = false,
             errorMessage = null
         )
+    }
+    
+    fun onShareAppClick() {
+        shareManager.shareApp()
     }
 }

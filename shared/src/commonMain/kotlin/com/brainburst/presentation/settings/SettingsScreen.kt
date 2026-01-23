@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -163,12 +164,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         }
                         
                         // Grid icon
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+//                        Icon(
+//                            imageVector = Icons.Default.Settings,
+//                            contentDescription = null,
+//                            tint = Color.White,
+//                            modifier = Modifier.size(24.dp)
+//                        )
                     }
                 }
             }
@@ -216,6 +217,17 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 onCheckedChange = { enabled ->
                     viewModel.onNotificationsToggle(enabled)
                 }
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Share App
+            SettingsMenuItem(
+                icon = Icons.Default.Share,
+                iconColor = Color(0xFF9810FA),
+                title = "Share App",
+                subtitle = "Invite friends to play",
+                onClick = { viewModel.onShareAppClick() }
             )
             
             Spacer(modifier = Modifier.height(12.dp))
