@@ -29,6 +29,11 @@ class ZipGenerator:
                     {"row": 0, "col": 1, "index": 1},
                     {"row": 2, "col": 3, "index": 2},
                     ...
+                ],
+                "solution": [
+                    {"row": 0, "col": 0},
+                    {"row": 0, "col": 1},
+                    ...
                 ]
             }
         """
@@ -43,9 +48,13 @@ class ZipGenerator:
         if random.random() < self.wall_probability:
             walls = self._generate_walls(solution_path)
         
+        # Convert solution path to serializable format
+        solution = [{"row": pos[0], "col": pos[1]} for pos in solution_path]
+        
         payload = {
             "size": self.size,
-            "dots": dots
+            "dots": dots,
+            "solution": solution
         }
         
         # Only add walls if we generated any

@@ -98,7 +98,6 @@ class ZipViewModel(
     private var currentState: ZipState? = null
     private var timerJob: Job? = null
     private var puzzleId: String? = null
-    private var solutionCache: List<Position>? = null
 
     // Timer state
     private var elapsedMillisWhenPaused: Long = 0L
@@ -376,154 +375,6 @@ class ZipViewModel(
     }
     
     /**
-     * Solve the ZIP puzzle using backtracking DFS
-     * Returns the complete solution path from dot 1 to the last dot
-     */
-    private fun solvePuzzle(payload: ZipPayload): List<Position>? {
-        val gridSize = payload.size
-        val totalCells = gridSize * gridSize
-        val solution = mutableListOf<Position>()
-        val visited = mutableSetOf<Position>()
-        val startPos = payload.getDot(1)?.toPosition() ?: return null
-        
-        fun dfs(current: Position, dotIndex: Int): Boolean {
-            solution.add(current)
-            visited.add(current)
-            
-            // Success: all cells visited and all dots connected
-            if (solution.size == totalCells && dotIndex == payload.dotCount) {
-                return true
-            }
-            
-            // Determine if we need to reach next dot
-            val nextDotIndex = dotIndex + 1
-            val nextDot = payload.getDotPosition(nextDotIndex)
-            
-            // Get adjacent cells (respecting walls)
-            val adjacent = getAdjacentPositionsWithWalls(current, gridSize, payload.walls)
-            
-            // If we need to reach next dot, prioritize moves toward it
-            val sortedAdjacent = if (nextDot != null && nextDotIndex <= payload.dotCount) {
-                adjacent.sortedBy { pos ->
-                    kotlin.math.abs(pos.row - nextDot.row) + kotlin.math.abs(pos.col - nextDot.col)
-                }
-            } else {
-                adjacent
-            }
-            
-            for (next in sortedAdjacent) {
-                if (next in visited) continue
-                
-                // Check if this is the next dot
-                val isNextDot = next == nextDot
-                
-                // Pruning: if we need a specific dot and this isn't it, 
-                // make sure we can still reach it
-                if (nextDot != null && !isNextDot && nextDotIndex <= payload.dotCount) {
-                    // Check if we're blocking path to next dot
-                    if (!canStillReachDot(next, nextDot, visited, totalCells - solution.size - 1, payload.walls)) {
-                        continue
-                    }
-                }
-                
-                val newDotIndex = if (isNextDot) dotIndex + 1 else dotIndex
-                
-                if (dfs(next, newDotIndex)) {
-                    return true
-                }
-            }
-            
-            // Backtrack
-            solution.removeLast()
-            visited.remove(current)
-            return false
-        }
-        
-        return if (dfs(startPos, 1)) solution else null
-    }
-    
-    /**
-     * Check if we can still reach a target dot from current position
-     */
-    private fun canStillReachDot(
-        from: Position,
-        target: Position,
-        visited: Set<Position>,
-        @Suppress("UNUSED_PARAMETER") remainingCells: Int,
-        walls: List<ZipWall>
-    ): Boolean {
-        // Simple reachability check using BFS
-        if (from == target) return true
-        
-        val queue = mutableListOf(from)
-        val tempVisited = visited.toMutableSet()
-        tempVisited.add(from)
-        
-        while (queue.isNotEmpty()) {
-            val current = queue.removeAt(0)
-            
-            for (next in getAdjacentPositionsWithWalls(current, 6, walls)) {
-                if (next in tempVisited) continue
-                
-                if (next == target) return true
-                
-                tempVisited.add(next)
-                queue.add(next)
-            }
-        }
-        
-        return false
-    }
-    
-    /**
-     * Get adjacent positions (up, down, left, right) that are not blocked by walls
-     */
-    private fun getAdjacentPositionsWithWalls(pos: Position, gridSize: Int, walls: List<ZipWall>): List<Position> {
-        val candidates = listOf(
-            Position(pos.row - 1, pos.col),  // UP
-            Position(pos.row + 1, pos.col),  // DOWN
-            Position(pos.row, pos.col - 1),  // LEFT
-            Position(pos.row, pos.col + 1)   // RIGHT
-        ).filter { it.row in 0 until gridSize && it.col in 0 until gridSize }
-        
-        // Filter out moves blocked by walls
-        return candidates.filter { next ->
-            !isBlockedByWall(pos, next, walls)
-        }
-    }
-    
-    /**
-     * Check if a move from 'from' to 'to' is blocked by a wall
-     */
-    private fun isBlockedByWall(from: Position, to: Position, walls: List<ZipWall>): Boolean {
-        val rowDiff = to.row - from.row
-        val colDiff = to.col - from.col
-        
-        for (wall in walls) {
-            // Check walls from the 'from' cell
-            if (wall.row == from.row && wall.col == from.col) {
-                when (wall.side) {
-                    WallSide.TOP -> if (rowDiff == -1 && colDiff == 0) return true
-                    WallSide.RIGHT -> if (rowDiff == 0 && colDiff == 1) return true
-                    WallSide.BOTTOM -> if (rowDiff == 1 && colDiff == 0) return true
-                    WallSide.LEFT -> if (rowDiff == 0 && colDiff == -1) return true
-                }
-            }
-            // Check walls from the 'to' cell (opposite sides)
-            if (wall.row == to.row && wall.col == to.col) {
-                when (wall.side) {
-                    WallSide.TOP -> if (rowDiff == 1 && colDiff == 0) return true
-                    WallSide.RIGHT -> if (rowDiff == 0 && colDiff == -1) return true
-                    WallSide.BOTTOM -> if (rowDiff == -1 && colDiff == 0) return true
-                    WallSide.LEFT -> if (rowDiff == 0 && colDiff == 1) return true
-                }
-            }
-        }
-        
-        return false
-    }
-    
-    /**
      * Find where user path diverges from solution
      */
     private fun findDivergence(userPath: List<Position>, solution: List<Position>): Int {
@@ -533,27 +384,6 @@ class ZipViewModel(
             }
         }
         return userPath.size  // No divergence yet
-    }
-    
-    /**
-     * Check if the next move is forced (only valid continuation)
-     */
-    private fun isForced(
-        state: ZipState,
-        nextPos: Position,
-        @Suppress("UNUSED_PARAMETER") solution: List<Position>,
-        payload: ZipPayload
-    ): Boolean {
-        val current = state.lastPosition() ?: return false
-        val adjacent = getAdjacentPositionsWithWalls(current, payload.size, payload.walls)
-        val unvisited = adjacent.filter { !state.containsPosition(it) }
-        
-        // Only one option available
-        if (unvisited.size <= 1) return true
-        
-        // Multiple options: check if only one doesn't create dead end
-        // For simplicity, we trust the solution path
-        return unvisited.size == 1 && unvisited.first() == nextPos
     }
     
     /**
@@ -611,19 +441,16 @@ class ZipViewModel(
         
         viewModelScope.launch {
             // Show rewarded ad first
-             adManager.showRewardedAd {
+//             adManager.showRewardedAd {
                 viewModelScope.launch adCallback@{
-                    // Solve puzzle (use cached solution if available)
-                    val solution = solutionCache ?: solvePuzzle(payloadData)?.also { 
-                        solutionCache = it 
-                    }
+                    // Use pre-calculated solution from payload
+                    val solution = payloadData.solution.map { it.toPosition() }
                     
-                    if (solution == null) {
-                        // No solution exists (should not happen with valid puzzles)
-                        println("ZIP HINT: No solution found!")
+                    if (solution.isEmpty()) {
+                        // No solution provided in payload
+                        println("ZIP HINT: No solution found in payload!")
                         resumeTimer()
                         return@adCallback
-
                     }
                     
                     println("ZIP HINT: Solution found with ${solution.size} cells")
@@ -672,7 +499,7 @@ class ZipViewModel(
                     
                     resumeTimer()
                 }
-            }
+//            }
         }
     }
 

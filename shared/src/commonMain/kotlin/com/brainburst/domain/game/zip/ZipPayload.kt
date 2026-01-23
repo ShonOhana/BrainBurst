@@ -1,6 +1,7 @@
 package com.brainburst.domain.game.zip
 
 import com.brainburst.domain.game.Position
+import com.brainburst.domain.model.SerializablePosition
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,7 +12,8 @@ import kotlinx.serialization.Serializable
 data class ZipPayload(
     val size: Int = 6,  // Fixed 6x6 grid
     val dots: List<ZipDot>,  // Numbered dots to connect (1 to N)
-    val walls: List<ZipWall> = emptyList()  // Wall barriers that block paths
+    val walls: List<ZipWall> = emptyList(),  // Wall barriers that block paths
+    val solution: List<SerializablePosition> = emptyList()  // Pre-calculated solution path
 ) {
     init {
         require(size == 6) { "ZIP grid size must be 6" }
