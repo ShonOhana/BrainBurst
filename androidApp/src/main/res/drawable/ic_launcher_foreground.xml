@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="27"
+        android:translateY="27">
+        <!-- White rounded square background -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M8,0 L46,0 A8,8 0,0 1,54 8 L54,46 A8,8 0,0 1,46 54 L8,54 A8,8 0,0 1,0 46 L0,8 A8,8 0,0 1,8 0 Z"/>
+        <!-- Grid squares -->
+        <path
+            android:fillColor="#8B5CF6"
+            android:pathData="M10,10 L20,10 L20,20 L10,20 Z"/>
+        <path
+            android:fillColor="#8B5CF6"
+            android:pathData="M22,10 L32,10 L32,20 L22,20 Z"/>
+        <path
+            android:fillColor="#6366F1"
+            android:pathData="M34,10 L44,10 L44,20 L34,20 Z"/>
+        <path
+            android:fillColor="#8B5CF6"
+            android:pathData="M10,22 L20,22 L20,32 L10,32 Z"/>
+        <path
+            android:fillColor="#8B5CF6"
+            android:pathData="M22,22 L32,22 L32,32 L22,32 Z"/>
+        <path
+            android:fillColor="#6366F1"
+            android:pathData="M34,22 L44,22 L44,32 L34,32 Z"/>
+        <path
+            android:fillColor="#8B5CF6"
+            android:pathData="M10,34 L20,34 L20,44 L10,44 Z"/>
+        <path
+            android:fillColor="#8B5CF6"
+            android:pathData="M22,34 L32,34 L32,44 L22,44 Z"/>
+        <path
+            android:fillColor="#6366F1"
+            android:pathData="M34,34 L44,34 L44,44 L34,44 Z"/>
+    </group>
+</vector>
