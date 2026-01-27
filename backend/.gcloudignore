@@ -15,3 +15,11 @@
 
 node_modules
 #!include:.gitignore
+
+# Development files (don't upload to cloud)
+.env
+.env.dev
+.env.prod
+serviceAccountKey*.json
+*.md
+

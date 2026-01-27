@@ -3,6 +3,7 @@
 # BrainBurst Backend - Cloud Scheduler Setup Script
 # This script sets up automatic daily puzzle generation at 9:00 AM UTC
 # Creates jobs for both Sudoku and ZIP puzzles
+# Usage: ./setup_scheduler.sh [--dev|--prod]
 
 set -e  # Exit on error
 
@@ -17,18 +18,47 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Parse environment argument
+ENVIRONMENT="prod"
+if [ "$1" == "--dev" ]; then
+    ENVIRONMENT="dev"
+elif [ "$1" == "--prod" ]; then
+    ENVIRONMENT="prod"
+elif [ -n "$1" ]; then
+    echo -e "${RED}❌ Invalid argument: $1${NC}"
+    echo "Usage: ./setup_scheduler.sh [--dev|--prod]"
+    echo "  --dev   Setup scheduler for development environment"
+    echo "  --prod  Setup scheduler for production environment (default)"
+    exit 1
+fi
+
+# Set project ID based on environment
+if [ "$ENVIRONMENT" == "dev" ]; then
+    PROJECT_ID="brainburst-dev"
+    echo -e "${BLUE}🔧 DEVELOPMENT MODE${NC}"
+else
+    PROJECT_ID="brainburst-bb78e"
+    echo -e "${GREEN}🚀 PRODUCTION MODE${NC}"
+fi
+
 # Check if gcloud is installed
 if ! command -v gcloud &> /dev/null; then
     echo -e "${RED}❌ Google Cloud SDK not found!${NC}"
     exit 1
 fi
 
-# Set project
-PROJECT_ID="brainburst-bb78e"
+echo -e "📦 Setting project to: ${PROJECT_ID}"
 gcloud config set project ${PROJECT_ID}
 
-# Function configuration
-FUNCTION_NAME="generate-daily-puzzle"
+# Function configuration (add environment suffix for dev)
+if [ "$ENVIRONMENT" == "dev" ]; then
+    FUNCTION_NAME="generate-daily-puzzle-dev"
+    JOB_SUFFIX="-dev"
+else
+    FUNCTION_NAME="generate-daily-puzzle"
+    JOB_SUFFIX=""
+fi
+
 REGION="us-central1"
 
 # Get function URL
@@ -107,8 +137,8 @@ create_or_update_job() {
 }
 
 # Create/update both scheduler jobs
-create_or_update_job "daily-puzzle-sudoku" "MINI_SUDOKU_6X6" "Daily Sudoku puzzle generation at 8:00 AM UTC"
-create_or_update_job "daily-puzzle-zip" "ZIP" "Daily ZIP puzzle generation at 8:00 AM UTC"
+create_or_update_job "daily-puzzle-sudoku${JOB_SUFFIX}" "MINI_SUDOKU_6X6" "Daily Sudoku puzzle generation at 8:00 AM UTC (${ENVIRONMENT})"
+create_or_update_job "daily-puzzle-zip${JOB_SUFFIX}" "ZIP" "Daily ZIP puzzle generation at 8:00 AM UTC (${ENVIRONMENT})"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -118,15 +148,23 @@ gcloud scheduler jobs list --location=${REGION} --format="table(name,schedule,st
 
 echo ""
 echo -e "${BLUE}🧪 Test the schedulers manually:${NC}"
-echo "  gcloud scheduler jobs run daily-puzzle-sudoku --location=${REGION}"
-echo "  gcloud scheduler jobs run daily-puzzle-zip --location=${REGION}"
+echo "  gcloud scheduler jobs run daily-puzzle-sudoku${JOB_SUFFIX} --location=${REGION}"
+echo "  gcloud scheduler jobs run daily-puzzle-zip${JOB_SUFFIX} --location=${REGION}"
 echo ""
 echo -e "${BLUE}📋 View scheduler logs:${NC}"
 echo "  gcloud logging read \"resource.type=cloud_scheduler_job\" --limit=20"
 echo ""
 echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo ""
-echo "Both Sudoku and ZIP puzzles will now generate automatically every day at 8:00 AM UTC!"
+
+if [ "$ENVIRONMENT" == "dev" ]; then
+    echo "Development scheduler jobs created!"
+    echo "Test your changes safely without affecting production."
+else
+    echo "Production scheduler jobs created!"
+    echo "Both Sudoku and ZIP puzzles will now generate automatically every day at 8:00 AM UTC!"
+fi
+
 echo "Check Firestore tomorrow to see the new puzzles."
 
 
