@@ -52,7 +52,7 @@ expect class AdManager {
     
     /**
      * Checks if an interstitial ad should be shown based on frequency capping
-     * Rules: Max 1 per 5 minutes, only after every 3 games
+     * Rules: Max 1 per 5 minutes, only after every 2 games (daily puzzles)
      * @return true if ad should be shown, false otherwise
      */
     fun shouldShowInterstitial(): Boolean
@@ -61,5 +61,11 @@ expect class AdManager {
      * Records that an interstitial ad was shown (for frequency capping)
      */
     fun recordInterstitialShown()
+    
+    /**
+     * Records that a game was completed (for frequency capping)
+     * Call this after each game completion to increment the counter
+     */
+    fun recordGameCompleted()
 }
 

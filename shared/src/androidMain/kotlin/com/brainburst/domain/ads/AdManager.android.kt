@@ -34,7 +34,7 @@ actual class AdManager(private val activity: Activity) {
     private var lastInterstitialTime = 0L
     private var gamesCompletedCount = 0
     private val MIN_INTERSTITIAL_INTERVAL_MS = 5 * 60 * 1000L // 5 minutes
-    private val GAMES_BETWEEN_INTERSTITIALS = 3
+    private val GAMES_BETWEEN_INTERSTITIALS = 2 // Show ad after 2 daily puzzles
     actual fun preloadInterstitialAd() {
         val adRequest = AdRequest.Builder().build()
         
@@ -244,7 +244,7 @@ actual class AdManager(private val activity: Activity) {
      * Call this when a game is completed to increment the counter
      * This is used for frequency capping
      */
-    fun recordGameCompleted() {
+    actual fun recordGameCompleted() {
         gamesCompletedCount++
         Log.d("AdManager", "🎮 Game completed - count: $gamesCompletedCount")
     }

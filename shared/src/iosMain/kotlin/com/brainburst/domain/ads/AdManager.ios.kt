@@ -66,5 +66,9 @@ actual class AdManager {
     actual fun recordInterstitialShown() {
         // iOS tracking would go here
     }
+    
+    actual fun recordGameCompleted() {
+        // iOS game completion tracking would go here
+    }
 }
 

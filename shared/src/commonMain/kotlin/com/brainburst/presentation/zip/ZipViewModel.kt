@@ -540,15 +540,7 @@ class ZipViewModel(
                         puzzleId?.let { gameStateRepository.clearGameState(it) }
                         
                         // Record game completion for frequency capping
-                        if (adManager is com.brainburst.domain.ads.AdManager) {
-                            try {
-                                // Use reflection to call Android-only method if available
-                                val method = adManager.javaClass.getMethod("recordGameCompleted")
-                                method.invoke(adManager)
-                            } catch (e: Exception) {
-                                // iOS or method not found - ignore
-                            }
-                        }
+                        adManager.recordGameCompleted()
                         
                         // Show interstitial ad with frequency capping
                         if (adManager.shouldShowInterstitial()) {
