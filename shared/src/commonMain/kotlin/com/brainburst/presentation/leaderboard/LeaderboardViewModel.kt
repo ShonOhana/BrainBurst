@@ -131,14 +131,20 @@ class LeaderboardViewModel(
     }
     
     private fun formatDuration(durationMs: Long): String {
-        val seconds = durationMs / 1000
-        val minutes = seconds / 60
-        val secs = seconds % 60
-        // Use buildString for Kotlin Native compatibility (iOS)
-        return buildString {
-            append(minutes)
-            append(":")
-            append(if (secs < 10) "0$secs" else "$secs")
+        val totalSeconds = durationMs / 1000.0  // Convert to double for decimal precision
+        val minutes = (totalSeconds / 60).toInt()
+        val seconds = totalSeconds % 60
+        
+        return if (minutes > 0) {
+            // Format as "2:05.34" (minutes:seconds.milliseconds)
+            buildString {
+                append(minutes)
+                append(":")
+                append(String.format("%05.2f", seconds))
+            }
+        } else {
+            // Format as "45.34s" (seconds.milliseconds)
+            String.format("%.2fs", seconds)
         }
     }
     
