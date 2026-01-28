@@ -42,21 +42,21 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     val gradientPurple = Color(0xFF6C3CE3)
     val gradientBlue = Color(0xFF5B42F3)
     val backgroundColor = Color(0xFFF5F3FF)
-    
+
     // Permission state
     var showPermissionDialog by remember { mutableStateOf(false) }
-    
+
     // Check for permission result
     LaunchedEffect(uiState.permissionDenied) {
         if (uiState.permissionDenied) {
             showPermissionDialog = true
         }
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -99,7 +99,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     .padding(horizontal = 20.dp)
                     .padding(bottom = 24.dp)
             )
-            
+
             // User profile card with gradient background
             Card(
                 modifier = Modifier
@@ -144,9 +144,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                                     color = Color.White
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.width(16.dp))
-                            
+
                             // User name and email
                             Column {
                                 Text(
@@ -162,7 +162,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                                 )
                             }
                         }
-                        
+
                         // Grid icon
 //                        Icon(
 //                            imageVector = Icons.Default.Settings,
@@ -173,30 +173,34 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Account Settings section
-            Text(
-                text = "Account Settings",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Change Password
-            SettingsMenuItem(
-                icon = Icons.Default.Lock,
-                iconColor = Color(0xFF9810FA),
-                title = "Change Password",
-                subtitle = "Update your password",
-                onClick = { viewModel.onChangePasswordClick() }
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
+
+
+            // Change Password (only show for email/password users)
+            if (uiState.user?.isPasswordProvider == true) {
+                Spacer(modifier = Modifier.height(32.dp))
+                // Account Settings section
+                Text(
+                    text = "Account Settings",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingsMenuItem(
+                    icon = Icons.Default.Lock,
+                    iconColor = Color(0xFF9810FA),
+                    title = "Change Password",
+                    subtitle = "Update your password",
+                    onClick = { viewModel.onChangePasswordClick() }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             // Preferences section
             Text(
                 text = "Preferences",
@@ -204,9 +208,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 color = Color.Gray,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Notifications
             SettingsMenuItemWithSwitch(
                 icon = Icons.Default.Notifications,
@@ -218,9 +222,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     viewModel.onNotificationsToggle(enabled)
                 }
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Share App
             SettingsMenuItem(
                 icon = Icons.Default.Share,
@@ -229,9 +233,19 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 subtitle = "Invite friends to play",
                 onClick = { viewModel.onShareAppClick() }
             )
-            
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Preferences section
+            Text(
+                text = "Account",
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Delete Account
             SettingsMenuItem(
                 icon = Icons.Default.Delete,
@@ -241,9 +255,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 onClick = { viewModel.onDeleteAccountClick() },
                 showLoading = uiState.isDeleting
             )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Log Out
             SettingsMenuItem(
                 icon = Icons.AutoMirrored.Filled.ExitToApp,
@@ -253,7 +265,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 onClick = { viewModel.onLogoutClick() },
                 showLoading = uiState.isLoading
             )
-            
+
             // Error message if logout fails
             if (uiState.errorMessage != null) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -272,11 +284,11 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
-    
+
     // Delete Account Confirmation Dialog
     if (uiState.showDeleteAccountDialog) {
         DeleteAccountConfirmationDialog(
@@ -284,7 +296,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onDismiss = { viewModel.onDeleteAccountCancel() }
         )
     }
-    
+
     // Logout Confirmation Dialog
     if (uiState.showLogoutDialog) {
         LogoutConfirmationDialog(
@@ -292,7 +304,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onDismiss = { viewModel.onLogoutCancel() }
         )
     }
-    
+
     // Change Password Bottom Sheet
     if (uiState.showChangePasswordSheet) {
         ChangePasswordBottomSheet(
@@ -305,11 +317,11 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onDismiss = { viewModel.onChangePasswordDismiss() }
         )
     }
-    
+
     // Permission Denied Dialog
     if (showPermissionDialog) {
         PermissionDeniedDialog(
-            onDismiss = { 
+            onDismiss = {
                 showPermissionDialog = false
                 viewModel.onPermissionDialogDismissed()
             },
@@ -366,9 +378,9 @@ fun SettingsMenuItem(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(16.dp))
-                
+
                 // Title and subtitle
                 Column {
                     Text(
@@ -386,7 +398,7 @@ fun SettingsMenuItem(
                     }
                 }
             }
-            
+
             // Arrow or loading indicator
             if (showLoading) {
                 CircularProgressIndicator(
@@ -449,9 +461,9 @@ fun SettingsMenuItemWithSwitch(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(16.dp))
-                
+
                 // Title and subtitle
                 Column {
                     Text(
@@ -469,7 +481,7 @@ fun SettingsMenuItemWithSwitch(
                     }
                 }
             }
-            
+
             // Switch
             Switch(
                 checked = checked,
@@ -497,7 +509,7 @@ fun ChangePasswordBottomSheet(
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = Color.White
@@ -515,18 +527,18 @@ fun ChangePasswordBottomSheet(
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Description
             Text(
                 text = "Enter your current password and choose a new one",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Current Password
             Text(
                 text = "Current Password",
@@ -534,9 +546,9 @@ fun ChangePasswordBottomSheet(
                 fontWeight = FontWeight.Medium,
                 color = Color.Black
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             OutlinedTextField(
                 value = currentPassword,
                 onValueChange = { currentPassword = it },
@@ -550,9 +562,9 @@ fun ChangePasswordBottomSheet(
                     unfocusedBorderColor = Color.LightGray
                 )
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // New Password
             Text(
                 text = "New Password",
@@ -560,9 +572,9 @@ fun ChangePasswordBottomSheet(
                 fontWeight = FontWeight.Medium,
                 color = Color.Black
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
@@ -576,9 +588,9 @@ fun ChangePasswordBottomSheet(
                     unfocusedBorderColor = Color.LightGray
                 )
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Confirm New Password
             Text(
                 text = "Confirm New Password",
@@ -586,9 +598,9 @@ fun ChangePasswordBottomSheet(
                 fontWeight = FontWeight.Medium,
                 color = Color.Black
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -602,7 +614,7 @@ fun ChangePasswordBottomSheet(
                     unfocusedBorderColor = Color.LightGray
                 )
             )
-            
+
             // Error message
             if (errorMessage != null) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -612,7 +624,7 @@ fun ChangePasswordBottomSheet(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-            
+
             // Success message
             if (isSuccess) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -623,9 +635,9 @@ fun ChangePasswordBottomSheet(
                     fontWeight = FontWeight.Bold
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -639,7 +651,7 @@ fun ChangePasswordBottomSheet(
                 ) {
                     Text("Cancel")
                 }
-                
+
                 // Update Password button
                 Button(
                     onClick = {
@@ -743,9 +755,11 @@ fun getInitials(displayName: String?, email: String?): String {
                 displayName.take(2).uppercase()
             }
         }
+
         !email.isNullOrBlank() -> {
             email.take(2).uppercase()
         }
+
         else -> "U"
     }
 }

@@ -28,11 +28,15 @@ class AuthRepositoryImpl(
                 flowOf<User?>(null)
             } else {
                 flow<User?> {
+                    // Check if user has password provider
+                    val isPasswordProvider = firebaseUser.providerData.any { it.providerId == "password" }
+                    
                     // First create User from Firebase Auth
                     val baseUser = User(
                         uid = firebaseUser.uid,
                         email = firebaseUser.email,
-                        displayName = firebaseUser.displayName
+                        displayName = firebaseUser.displayName,
+                        isPasswordProvider = isPasswordProvider
                     )
                     
                     // Try to fetch from Firestore to get firstName/lastName
@@ -329,6 +333,11 @@ class AuthRepositoryImpl(
             // On any error, return false (treat as not registered)
             false
         }
+    }
+    
+    override fun hasPasswordProvider(): Boolean {
+        val firebaseUser = firebaseAuth.currentUser ?: return false
+        return firebaseUser.providerData.any { it.providerId == "password" }
     }
 }
 

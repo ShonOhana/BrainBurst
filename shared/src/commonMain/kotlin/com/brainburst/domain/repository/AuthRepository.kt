@@ -58,6 +58,12 @@ interface AuthRepository {
      * @return true if user is authenticated and exists in Firestore, false otherwise
      */
     suspend fun checkUserRegistration(): Boolean
+    
+    /**
+     * Check if the current user has a password provider (email/password authentication)
+     * @return true if the user signed in with email/password, false if using Google or other providers
+     */
+    fun hasPasswordProvider(): Boolean
 }
 
 
