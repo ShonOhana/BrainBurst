@@ -100,7 +100,7 @@ private fun AppContent() {
             PlatformBackHandler(enabled = true) {
                 viewModel.onBackPress()
             }
-            SudokuScreen(viewModel)
+            SudokuScreen(viewModel, adManager)
         }
         is Screen.Zip -> {
             val viewModel: ZipViewModel = koinInject()
@@ -108,7 +108,7 @@ private fun AppContent() {
             PlatformBackHandler(enabled = true) {
                 viewModel.onBackPress()
             }
-            ZipScreen(viewModel)
+            ZipScreen(viewModel, adManager)
         }
         is Screen.Leaderboard -> {
             val leaderboardScreen = currentScreen as Screen.Leaderboard
@@ -117,7 +117,7 @@ private fun AppContent() {
             PlatformBackHandler(enabled = true) {
                 viewModel.onBackPress()
             }
-            LeaderboardScreen(viewModel)
+            LeaderboardScreen(viewModel, adManager)
         }
     }
 }

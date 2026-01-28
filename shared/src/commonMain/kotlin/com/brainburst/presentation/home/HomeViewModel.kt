@@ -235,11 +235,9 @@ class HomeViewModel(
                         }
                     }
                     is GameStateUI.Completed -> {
-                        // User has completed - show ad then show results
+                        // User has completed - navigate directly to results (no ad interruption)
                         viewModelScope.launch {
-                            adManager.showInterstitialAd {
-                                navigator.navigateTo(Screen.Leaderboard(gameType))
-                            }
+                            navigator.navigateTo(Screen.Leaderboard(gameType))
                         }
                     }
                     else -> {
@@ -256,10 +254,9 @@ class HomeViewModel(
                         }
                     }
                     is GameStateUI.Completed -> {
+                        // User has completed - navigate directly to results (no ad interruption)
                         viewModelScope.launch {
-                            adManager.showInterstitialAd {
-                                navigator.navigateTo(Screen.Leaderboard(gameType))
-                            }
+                            navigator.navigateTo(Screen.Leaderboard(gameType))
                         }
                     }
                     else -> {

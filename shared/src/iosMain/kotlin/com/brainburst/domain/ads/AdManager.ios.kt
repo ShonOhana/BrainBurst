@@ -36,5 +36,35 @@ actual class AdManager {
         // For now, just give the reward immediately
         onRewarded()
     }
+    
+    // ============ BANNER ADS (Stub) ============
+    
+    actual fun loadBanner(onBannerLoaded: (Any) -> Unit) {
+        // iOS banner implementation would go here
+        // For now, skip banners on iOS
+    }
+    
+    actual fun destroyBanner() {
+        // iOS banner cleanup would go here
+    }
+    
+    // ============ NATIVE ADS (Stub) ============
+    
+    actual suspend fun loadNativeAd(): Any? {
+        // iOS native ad implementation would go here
+        // For now, return null (no native ads on iOS)
+        return null
+    }
+    
+    // ============ FREQUENCY CAPPING (Stub) ============
+    
+    actual fun shouldShowInterstitial(): Boolean {
+        // For iOS, always return false for now (no interstitials)
+        return false
+    }
+    
+    actual fun recordInterstitialShown() {
+        // iOS tracking would go here
+    }
 }
 

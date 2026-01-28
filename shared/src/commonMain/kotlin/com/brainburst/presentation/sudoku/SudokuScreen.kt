@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.brainburst.domain.game.Position
 import com.brainburst.platform.PlatformLifecycleHandler
+import com.brainburst.presentation.ads.BannerAdView
 import kotlinx.coroutines.delay
 
 // Helper function to count number occurrences on the board
@@ -41,7 +42,7 @@ private fun countNumberOccurrences(board: List<List<Int>>): Map<Int, Int> {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SudokuScreen(viewModel: SudokuViewModel) {
+fun SudokuScreen(viewModel: SudokuViewModel, adManager: com.brainburst.domain.ads.AdManager) {
     val uiState by viewModel.uiState.collectAsState()
     val event by viewModel.events.collectAsState()
     
@@ -281,6 +282,10 @@ fun SudokuScreen(viewModel: SudokuViewModel) {
                         isComplete = uiState.isComplete,
                         disabledNumbers = fullyPlacedNumbers
                     )
+                    
+                    // Banner ad at bottom
+                    Spacer(modifier = Modifier.height(8.dp))
+                    BannerAdView(adManager = adManager)
                 }
             }
             

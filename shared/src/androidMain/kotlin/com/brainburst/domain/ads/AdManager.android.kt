@@ -3,27 +3,38 @@ package com.brainburst.domain.ads
 import android.app.Activity
 import android.util.Log
 import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.OnUserEarnedRewardListener
+import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 actual class AdManager(private val activity: Activity) {
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
+    private var bannerView: AdView? = null
     
-    // Interstitial ad for leaderboard (short ad, 5-15 seconds)
+    // Ad Unit IDs
     private val interstitialAdUnitId = "ca-app-pub-2135414691513930/8388866066"
-    
-    // Rewarded ad for hints (longer ad, 30 seconds, higher revenue)
     private val rewardedAdUnitId = "ca-app-pub-2135414691513930/2454739457"
+    
+    private val bannerAdUnitId = "ca-app-pub-2135414691513930/8506346134"
+    private val nativeAdUnitId = "ca-app-pub-2135414691513930/6039964896"
+    
+    // Frequency capping for interstitials
+    private var lastInterstitialTime = 0L
+    private var gamesCompletedCount = 0
+    private val MIN_INTERSTITIAL_INTERVAL_MS = 5 * 60 * 1000L // 5 minutes
+    private val GAMES_BETWEEN_INTERSTITIALS = 3
     actual fun preloadInterstitialAd() {
         val adRequest = AdRequest.Builder().build()
         
@@ -153,6 +164,88 @@ actual class AdManager(private val activity: Activity) {
             }
         }
     }
+    
+    // ============ BANNER ADS ============
+    
+    actual fun loadBanner(onBannerLoaded: (Any) -> Unit) {
+        bannerView?.destroy()
+        
+        bannerView = AdView(activity).apply {
+            adUnitId = bannerAdUnitId
+            setAdSize(AdSize.BANNER)
+            
+            adListener = object : AdListener() {
+                override fun onAdLoaded() {
+                    Log.d("AdManager", "✅ Banner ad loaded")
+                    onBannerLoaded(this@apply)
+                }
+                
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    Log.e("AdManager", "❌ Failed to load banner ad: ${error.message}")
+                }
+            }
+            
+            loadAd(AdRequest.Builder().build())
+        }
+    }
+    
+    actual fun destroyBanner() {
+        bannerView?.destroy()
+        bannerView = null
+        Log.d("AdManager", "🗑️ Banner ad destroyed")
+    }
+    
+    // ============ NATIVE ADS ============
+    
+    actual suspend fun loadNativeAd(): Any? = suspendCancellableCoroutine { continuation ->
+        val adLoader = AdLoader.Builder(activity, nativeAdUnitId)
+            .forNativeAd { nativeAd ->
+                Log.d("AdManager", "✅ Native ad loaded")
+                continuation.resume(nativeAd)
+            }
+            .withAdListener(object : AdListener() {
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    Log.e("AdManager", "❌ Failed to load native ad: ${error.message}")
+                    continuation.resume(null)
+                }
+            })
+            .build()
+        
+        adLoader.loadAd(AdRequest.Builder().build())
+    }
+    
+    // ============ FREQUENCY CAPPING ============
+    
+    actual fun shouldShowInterstitial(): Boolean {
+        val currentTime = System.currentTimeMillis()
+        val timeSinceLastAd = currentTime - lastInterstitialTime
+        val hasWaitedLongEnough = timeSinceLastAd >= MIN_INTERSTITIAL_INTERVAL_MS
+        val hasPlayedEnoughGames = gamesCompletedCount >= GAMES_BETWEEN_INTERSTITIALS
+        
+        val shouldShow = hasWaitedLongEnough && hasPlayedEnoughGames
+        
+        Log.d("AdManager", """
+            🎯 Interstitial frequency check:
+            - Time since last ad: ${timeSinceLastAd / 1000}s (min: ${MIN_INTERSTITIAL_INTERVAL_MS / 1000}s)
+            - Games completed: $gamesCompletedCount (min: $GAMES_BETWEEN_INTERSTITIALS)
+            - Should show: $shouldShow
+        """.trimIndent())
+        
+        return shouldShow
+    }
+    
+    actual fun recordInterstitialShown() {
+        lastInterstitialTime = System.currentTimeMillis()
+        gamesCompletedCount = 0 // Reset counter after showing ad
+        Log.d("AdManager", "📊 Interstitial shown - counter reset")
+    }
+    
+    /**
+     * Call this when a game is completed to increment the counter
+     * This is used for frequency capping
+     */
+    fun recordGameCompleted() {
+        gamesCompletedCount++
+        Log.d("AdManager", "🎮 Game completed - count: $gamesCompletedCount")
+    }
 }
-
-

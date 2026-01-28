@@ -32,10 +32,11 @@ import androidx.compose.ui.text.TextStyle
 import com.brainburst.domain.game.Position
 import com.brainburst.domain.game.zip.WallSide
 import com.brainburst.platform.PlatformLifecycleHandler
+import com.brainburst.presentation.ads.BannerAdView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ZipScreen(viewModel: ZipViewModel) {
+fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdManager) {
     val uiState by viewModel.uiState.collectAsState()
     val event by viewModel.events.collectAsState()
     
@@ -320,6 +321,10 @@ fun ZipScreen(viewModel: ZipViewModel) {
                         )
                     }
                 }
+                
+                // Banner ad at bottom
+                Spacer(modifier = Modifier.height(8.dp))
+                BannerAdView(adManager = adManager)
                 
                 if (uiState.isSubmitting) {
                     Spacer(modifier = Modifier.height(16.dp))

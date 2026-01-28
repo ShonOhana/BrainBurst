@@ -365,8 +365,26 @@ class SudokuViewModel(
                 result.fold(
                     onSuccess = {
                         puzzleId?.let { gameStateRepository.clearGameState(it) }
-                        // Show ad before navigating to leaderboard
-                        adManager.showInterstitialAd {
+                        
+                        // Record game completion for frequency capping
+                        if (adManager is com.brainburst.domain.ads.AdManager) {
+                            try {
+                                // Use reflection to call Android-only method if available
+                                val method = adManager.javaClass.getMethod("recordGameCompleted")
+                                method.invoke(adManager)
+                            } catch (e: Exception) {
+                                // iOS or method not found - ignore
+                            }
+                        }
+                        
+                        // Show interstitial ad with frequency capping
+                        if (adManager.shouldShowInterstitial()) {
+                            adManager.showInterstitialAd {
+                                adManager.recordInterstitialShown()
+                                navigator.navigateTo(Screen.Leaderboard(GameType.MINI_SUDOKU_6X6))
+                            }
+                        } else {
+                            // Skip ad and navigate directly
                             navigator.navigateTo(Screen.Leaderboard(GameType.MINI_SUDOKU_6X6))
                         }
                     },
