@@ -21,6 +21,7 @@ data class HomeUiState(
     val user: User? = null,
     val games: List<GameStateUI> = emptyList(),
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,  // True when re-checking completion status after returning from game
     val errorMessage: String? = null,
     val adminMessage: String? = null  // For admin upload feedback
 )
@@ -94,6 +95,11 @@ class HomeViewModel(
                 return@launch
             }
             
+            // Set refreshing flag if this is a force refresh (returning from game)
+            if (forceRefresh) {
+                _uiState.value = _uiState.value.copy(isRefreshing = true)
+            }
+            
             // Start with loading states only if we don't have cached data
             if (cachedSudokuState == null) {
                 _uiState.value = _uiState.value.copy(
@@ -133,7 +139,8 @@ class HomeViewModel(
                         gameType = GameType.TANGO,
                         title = "Tango"
                     )
-                )
+                ),
+                isRefreshing = false  // Clear refreshing flag
             )
         }
     }
@@ -221,6 +228,11 @@ class HomeViewModel(
     }
     
     fun onGameClick(gameType: GameType) {
+        // Prevent clicks while refreshing completion status
+        if (_uiState.value.isRefreshing) {
+            return
+        }
+        
         when (gameType) {
             GameType.MINI_SUDOKU_6X6 -> {
                 // Check game state

@@ -85,10 +85,22 @@ class LeaderboardViewModel(
                                 return@fold
                             }
                             
-                            // Convert to leaderboard entries
+                            // Convert to leaderboard entries with proper tie handling
+                            var currentRank = 1
                             val entries = results.mapIndexed { index, resultDto ->
+                                // Check for ties with previous entry
+                                if (index > 0) {
+                                    val prev = results[index - 1]
+                                    if (resultDto.durationMs != prev.durationMs || 
+                                        resultDto.movesCount != prev.movesCount) {
+                                        // Not a tie, update rank to account for previous entries
+                                        currentRank = index + 1
+                                    }
+                                    // If it's a tie, keep the same rank
+                                }
+                                
                                 LeaderboardEntry(
-                                    rank = index + 1,
+                                    rank = currentRank,
                                     userId = resultDto.userId,
                                     displayName = resultDto.displayName,
                                     durationMs = resultDto.durationMs,

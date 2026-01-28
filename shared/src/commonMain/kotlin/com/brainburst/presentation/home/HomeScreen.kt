@@ -151,6 +151,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 GameCard(
                     modifier = m,
                     gameState = gameState,
+                    isRefreshing = uiState.isRefreshing,
                     onClick = { viewModel.onGameClick(gameState.gameType) }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -219,9 +220,10 @@ fun HomeScreen(viewModel: HomeViewModel) {
 fun GameCard(
     modifier: Modifier,
     gameState: GameStateUI,
+    isRefreshing: Boolean = false,
     onClick: () -> Unit
 ) {
-    val isClickable = gameState is GameStateUI.Available || gameState is GameStateUI.Completed
+    val isClickable = (gameState is GameStateUI.Available || gameState is GameStateUI.Completed) && !isRefreshing
 
     // Custom colors for completed state
     val completedCardBackground = Color(0xFF2D2A34)
@@ -374,12 +376,15 @@ fun GameCard(
                             // Top button: Play now
                             Button(
                                 onClick = onClick,
+                                enabled = !isRefreshing,
                                 modifier = Modifier
                                     .height(51.dp)
                                     .fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFFE8E8E8), // Light gray/off-white
-                                    contentColor = Color.Black
+                                    contentColor = Color.Black,
+                                    disabledContainerColor = Color(0xFFE8E8E8).copy(alpha = 0.5f),
+                                    disabledContentColor = Color.Black.copy(alpha = 0.5f)
                                 ),
                                 shape = MaterialTheme.shapes.extraLarge // Pill shape
                             ) {
@@ -387,21 +392,29 @@ fun GameCard(
                                     modifier = Modifier.fillMaxWidth(),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = "Play now",
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.Black,
-                                        maxLines = 1,
-                                        modifier = Modifier.align(Alignment.CenterStart)
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.PlayArrow,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(30.dp)
-                                            .align(Alignment.CenterEnd),
-                                        tint = Color.Black
-                                    )
+                                    if (isRefreshing) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            strokeWidth = 2.dp,
+                                            color = Color.Black.copy(alpha = 0.5f)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Play now",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black,
+                                            maxLines = 1,
+                                            modifier = Modifier.align(Alignment.CenterStart)
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .size(30.dp)
+                                                .align(Alignment.CenterEnd),
+                                            tint = Color.Black
+                                        )
+                                    }
                                 }
                             }
 
