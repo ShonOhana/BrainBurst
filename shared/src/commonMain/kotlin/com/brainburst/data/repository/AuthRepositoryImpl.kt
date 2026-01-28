@@ -8,6 +8,7 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -309,6 +310,24 @@ class AuthRepositoryImpl(
             }
         } catch (e: Exception) {
             Result.failure(Exception("An unexpected error occurred: ${e.message}"))
+        }
+    }
+    
+    override suspend fun checkUserRegistration(): Boolean {
+        return try {
+            // Wait for Firebase Auth to initialize and get first auth state
+            val firebaseUser = firebaseAuth.authStateChanged.first()
+            
+            if (firebaseUser == null) {
+                return false
+            }
+            
+            // Check if user exists in Firestore
+            val userDoc = usersCollection.document(firebaseUser.uid).get()
+            userDoc.exists
+        } catch (e: Exception) {
+            // On any error, return false (treat as not registered)
+            false
         }
     }
 }

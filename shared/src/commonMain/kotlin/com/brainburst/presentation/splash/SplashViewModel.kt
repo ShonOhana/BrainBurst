@@ -8,9 +8,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SplashViewModel(
@@ -27,16 +24,11 @@ class SplashViewModel(
     
     private fun checkAuthState() {
         viewModelScope.launch {
-            authRepository.currentUser.collectLatest { user ->
-                delay(1000)
-                if (user != null) {
-                    navigator.navigateTo(Screen.Home)
-                    _isLoading.value = false
-                } else {
-                    navigator.navigateTo(Screen.Auth)
-                    _isLoading.value = false
-                }
-            }
+
+            val isRegistered = authRepository.checkUserRegistration()
+            
+            navigator.navigateTo(if (isRegistered) Screen.Home else Screen.Auth)
+            _isLoading.value = false
         }
     }
 }

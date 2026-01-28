@@ -30,7 +30,11 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel, adManager: com.brainburst
                 title = {
                     Column {
                         Text(
-                            text = "Results",
+                            text = when (uiState.gameType) {
+                                com.brainburst.domain.model.GameType.MINI_SUDOKU_6X6 -> "Mini Sudoku 6×6"
+                                com.brainburst.domain.model.GameType.ZIP -> "Zip"
+                                com.brainburst.domain.model.GameType.TANGO -> "Tango"
+                            },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )

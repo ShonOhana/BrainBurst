@@ -51,6 +51,13 @@ interface AuthRepository {
      * @param newPassword The new password to set
      */
     suspend fun updatePassword(currentPassword: String, newPassword: String): Result<Unit>
+    
+    /**
+     * Check if a user is registered in Firestore
+     * Waits for Firebase Auth to initialize, then checks Firestore
+     * @return true if user is authenticated and exists in Firestore, false otherwise
+     */
+    suspend fun checkUserRegistration(): Boolean
 }
 
 
