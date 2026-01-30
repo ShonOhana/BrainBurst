@@ -45,7 +45,8 @@ data class SudokuUiState(
     val completedBlocks: Set<Pair<Int, Int>> = emptySet(),
     val animatingRow: Int? = null,
     val animatingColumn: Int? = null,
-    val animatingBlock: Pair<Int, Int>? = null
+    val animatingBlock: Pair<Int, Int>? = null,
+    val showCompletionAnimation: Boolean = false
 )
 
 sealed class SudokuEvent {
@@ -403,16 +404,23 @@ class SudokuViewModel(
             // Calculate total duration
             val durationMs = elapsedMillisWhenPaused
 
-            // Set submitting state
-            _uiState.value = _uiState.value.copy(isSubmitting = true)
-
-            // Emit completion event
-            _events.value = SudokuEvent.PuzzleCompleted(
-                durationMs = durationMs,
-                movesCount = state.movesCount
-            )
-            // Clear saved state
+            // Show completion animation first
+            _uiState.value = _uiState.value.copy(showCompletionAnimation = true)
+            
+            // Wait for animation, then submit
             viewModelScope.launch {
+                delay(3000) // 3 seconds for animation
+                _uiState.value = _uiState.value.copy(showCompletionAnimation = false)
+                
+                // Set submitting state
+                _uiState.value = _uiState.value.copy(isSubmitting = true)
+
+                // Emit completion event
+                _events.value = SudokuEvent.PuzzleCompleted(
+                    durationMs = durationMs,
+                    movesCount = state.movesCount
+                )
+                // Clear saved state
                 // Submit result to Firestore
                 val result = submitResult(durationMs, state.movesCount)
                 result.fold(

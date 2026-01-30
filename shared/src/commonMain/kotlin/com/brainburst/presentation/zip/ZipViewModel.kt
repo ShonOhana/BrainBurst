@@ -43,7 +43,8 @@ data class ZipUiState(
     val hintPosition: Position? = null,
     val hintType: HintType = HintType.None,
     val isHintOnCooldown: Boolean = false,
-    val hintCooldownProgress: Float = 0f
+    val hintCooldownProgress: Float = 0f,
+    val showCompletionAnimation: Boolean = false
 )
 
 data class ZipDotUi(
@@ -338,7 +339,16 @@ class ZipViewModel(
         if (newState.isCompleted) {
             isDragging = false
             pauseTimer()
-            onSubmit()
+            
+            // Show completion animation first
+            _uiState.value = _uiState.value.copy(showCompletionAnimation = true)
+            
+            // Wait for animation, then submit
+            viewModelScope.launch {
+                delay(3000) // 3 seconds for animation
+                _uiState.value = _uiState.value.copy(showCompletionAnimation = false)
+                onSubmit()
+            }
         }
     }
     

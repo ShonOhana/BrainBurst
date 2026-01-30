@@ -1,6 +1,7 @@
 package com.brainburst.presentation.zip
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -10,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +36,9 @@ import com.brainburst.domain.game.Position
 import com.brainburst.domain.game.zip.WallSide
 import com.brainburst.platform.PlatformLifecycleHandler
 import com.brainburst.presentation.ads.BannerAdView
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -356,6 +362,15 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                 }
             }
         }
+        
+        // 3D Completion Animation Overlay
+        if (uiState.showCompletionAnimation) {
+            CompletionAnimation3D(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.75f))
+            )
+        }
     }
 }
 
@@ -595,6 +610,201 @@ fun ZipCell(
                     fontSize = 16.sp
                 )
             }
+        }
+    }
+}
+
+// Data class for confetti particles
+private data class ConfettiParticle(
+    val x: Float,
+    val y: Float,
+    val velocityX: Float,
+    val velocityY: Float,
+    val color: Color,
+    val size: Float,
+    val rotation: Float,
+    val rotationSpeed: Float
+)
+
+@Composable
+fun CompletionAnimation3D(modifier: Modifier = Modifier) {
+    // Main 3D pulsing and rotation animation
+    val infiniteTransition = rememberInfiniteTransition()
+    
+    // Pulsing scale effect
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    // 3D rotation effect on Y-axis
+    val rotationY by infiniteTransition.animateFloat(
+        initialValue = -20f,
+        targetValue = 20f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    // 3D rotation effect on X-axis
+    val rotationX by infiniteTransition.animateFloat(
+        initialValue = -10f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    // Fade in animation for entrance
+    val alpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(500)
+    )
+    
+    // Star glow pulse
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    // Generate confetti particles once
+    val confettiParticles = remember {
+        List(50) {
+            ConfettiParticle(
+                x = Random.nextFloat(),
+                y = -0.1f - Random.nextFloat() * 0.2f,
+                velocityX = (Random.nextFloat() - 0.5f) * 0.002f,
+                velocityY = Random.nextFloat() * 0.005f + 0.003f,
+                color = listOf(
+                    Color(0xFFFFD700), // Gold
+                    Color(0xFF9810FA), // Purple
+                    Color(0xFF155DFC), // Blue
+                    Color(0xFFFF5722), // Red
+                    Color(0xFF4CAF50)  // Green
+                ).random(),
+                size = Random.nextFloat() * 8f + 4f,
+                rotation = Random.nextFloat() * 360f,
+                rotationSpeed = (Random.nextFloat() - 0.5f) * 10f
+            )
+        }
+    }
+    
+    // Animate confetti falling
+    var confettiTime by remember { mutableStateOf(0f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            withFrameMillis {
+                confettiTime += 0.016f // ~60fps
+            }
+        }
+    }
+    
+    Box(
+        modifier = modifier.graphicsLayer { this.alpha = alpha },
+        contentAlignment = Alignment.Center
+    ) {
+        // Confetti background
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            confettiParticles.forEach { particle ->
+                val currentY = particle.y + particle.velocityY * confettiTime
+                val currentX = particle.x + particle.velocityX * confettiTime
+                
+                // Wrap particles that go off screen
+                val wrappedY = if (currentY > 1.1f) -0.1f else currentY
+                val wrappedX = when {
+                    currentX < -0.1f -> 1.1f
+                    currentX > 1.1f -> -0.1f
+                    else -> currentX
+                }
+                
+                // Draw rotating circle as confetti
+                val centerX = wrappedX * size.width
+                val centerY = wrappedY * size.height
+                
+                drawCircle(
+                    color = particle.color,
+                    radius = particle.size,
+                    center = Offset(centerX, centerY),
+                    alpha = 0.9f
+                )
+            }
+        }
+        
+        // Main completion content with 3D effect
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    this.rotationY = rotationY
+                    this.rotationX = rotationX
+                    cameraDistance = 12f * density
+                }
+        ) {
+            // Glowing background for star
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(180.dp)
+            ) {
+                // Outer glow
+                Box(
+                    modifier = Modifier
+                        .size(160.dp)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFFFFD700).copy(alpha = glowAlpha),
+                                    Color.Transparent
+                                )
+                            ),
+                            shape = CircleShape
+                        )
+                )
+                
+                // Star icon
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    modifier = Modifier.size(140.dp),
+                    tint = Color(0xFFFFD700) // Gold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Completion text with gradient
+            Text(
+                text = "Puzzle Complete!",
+                style = TextStyle(
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFFFFD700),
+                            Color(0xFFFFA726)
+                        )
+                    )
+                )
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Celebration emoji
+            Text(
+                text = "🎉",
+                fontSize = 48.sp
+            )
         }
     }
 }
