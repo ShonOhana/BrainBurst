@@ -20,6 +20,14 @@ data class ZipMove(
     val position: Position
 ) : GameMove
 
+/**
+ * Represents a move in Tango where a cell value is set
+ */
+data class TangoMove(
+    val position: Position,
+    val value: com.brainburst.domain.game.tango.CellValue  // SUN, MOON, or EMPTY
+) : GameMove
+
 
 
 

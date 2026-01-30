@@ -7,6 +7,7 @@ sealed class Screen {
     data object Settings : Screen()
     data object Sudoku : Screen()
     data object Zip : Screen()
+    data object Tango : Screen()
     data class Leaderboard(val gameType: com.brainburst.domain.model.GameType) : Screen()
 }
 

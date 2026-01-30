@@ -82,14 +82,12 @@ class HomeViewModel(
             // If we have cached data and date hasn't changed, use cache
             if (!shouldReload && cachedSudokuState != null) {
                 val zipState = loadZipState(user.uid)
+                val tangoState = loadTangoState(user.uid)
                 _uiState.value = _uiState.value.copy(
                     games = listOf(
                         cachedSudokuState!!,
                         zipState,
-                        GameStateUI.ComingSoon(
-                            gameType = GameType.TANGO,
-                            title = "Tango"
-                        )
+                        tangoState
                     )
                 )
                 return@launch
@@ -112,7 +110,7 @@ class HomeViewModel(
                             gameType = GameType.ZIP,
                             title = "Zip"
                         ),
-                        GameStateUI.ComingSoon(
+                        GameStateUI.Loading(
                             gameType = GameType.TANGO,
                             title = "Tango"
                         )
@@ -126,6 +124,9 @@ class HomeViewModel(
             // Load ZIP state
             val zipState = loadZipState(user.uid)
             
+            // Load Tango state
+            val tangoState = loadTangoState(user.uid)
+            
             // Cache the result
             cachedSudokuState = sudokuState
             lastCheckedDate = today
@@ -135,10 +136,7 @@ class HomeViewModel(
                 games = listOf(
                     sudokuState,
                     zipState,
-                    GameStateUI.ComingSoon(
-                        gameType = GameType.TANGO,
-                        title = "Tango"
-                    )
+                    tangoState
                 ),
                 isRefreshing = false  // Clear refreshing flag
             )
@@ -227,6 +225,43 @@ class HomeViewModel(
         }
     }
     
+    private suspend fun loadTangoState(userId: String): GameStateUI {
+        val latestDate = puzzleRepository.getLatestAvailablePuzzleDate(GameType.TANGO)
+            .getOrNull()
+        
+        val today = Clock.System.todayIn(TimeZone.UTC).toString()
+        val hasTodayPuzzle = latestDate == today
+        
+        val formattedDate = latestDate?.let { DateFormatter.formatPuzzleDate(it) } ?: ""
+        
+        val hasCompleted = if (latestDate != null) {
+            puzzleRepository.hasUserCompletedToday(
+                userId = userId,
+                gameType = GameType.TANGO
+            ).getOrElse { false }
+        } else {
+            false
+        }
+        
+        return if (hasCompleted) {
+            GameStateUI.Completed(
+                gameType = GameType.TANGO,
+                title = "Tango",
+                subtitle = "Logic puzzle",
+                completionTimeFormatted = "--:--",
+                formattedDate = formattedDate
+            )
+        } else {
+            GameStateUI.Available(
+                gameType = GameType.TANGO,
+                title = "Tango",
+                subtitle = "Logic puzzle",
+                formattedDate = formattedDate,
+                hasTodayPuzzle = hasTodayPuzzle
+            )
+        }
+    }
+    
     fun onGameClick(gameType: GameType) {
         // Prevent clicks while refreshing completion status
         if (_uiState.value.isRefreshing) {
@@ -276,8 +311,23 @@ class HomeViewModel(
                     }
                 }
             }
-            else -> {
-                // Coming soon - do nothing or show toast
+            GameType.TANGO -> {
+                val gameState = _uiState.value.games.find { it.gameType == gameType }
+                when (gameState) {
+                    is GameStateUI.Available -> {
+                        viewModelScope.launch {
+                            navigator.navigateTo(Screen.Tango)
+                        }
+                    }
+                    is GameStateUI.Completed -> {
+                        viewModelScope.launch {
+                            navigator.navigateTo(Screen.Leaderboard(gameType))
+                        }
+                    }
+                    else -> {
+                        // Loading or Coming Soon - do nothing
+                    }
+                }
             }
         }
     }

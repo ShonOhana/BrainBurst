@@ -34,11 +34,24 @@ class ZipGenerator:
                     {"row": 0, "col": 0},
                     {"row": 0, "col": 1},
                     ...
-                ]
+                ],
+                "difficulty": "medium" | "hard" | "expert"
             }
         """
-        # Randomly select number of dots (between min and max)
-        num_dots = random.randint(self.min_dots, self.max_dots)
+        # Randomly select difficulty
+        difficulty = random.choice(["medium", "hard", "expert"])
+        
+        # Dot count based on difficulty
+        difficulty_dots = {
+            "medium": (8, 10),   # Easier - fewer dots
+            "hard": (11, 13),    # Moderate
+            "expert": (14, 16)   # Harder - more dots
+        }
+        
+        min_dots, max_dots = difficulty_dots.get(difficulty, (4, 16))
+        num_dots = random.randint(min_dots, max_dots)
+        
+        print(f"   Generating {difficulty} difficulty with {num_dots} dots")
         
         # Generate valid dot placements and solution path
         dots, solution_path = self._generate_valid_zip_puzzle(num_dots)
@@ -54,7 +67,8 @@ class ZipGenerator:
         payload = {
             "size": self.size,
             "dots": dots,
-            "solution": solution
+            "solution": solution,
+            "difficulty": difficulty
         }
         
         # Only add walls if we generated any

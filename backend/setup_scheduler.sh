@@ -136,9 +136,10 @@ create_or_update_job() {
     fi
 }
 
-# Create/update both scheduler jobs
+# Create/update all three scheduler jobs
 create_or_update_job "daily-puzzle-sudoku${JOB_SUFFIX}" "MINI_SUDOKU_6X6" "Daily Sudoku puzzle generation at 8:00 AM UTC (${ENVIRONMENT})"
 create_or_update_job "daily-puzzle-zip${JOB_SUFFIX}" "ZIP" "Daily ZIP puzzle generation at 8:00 AM UTC (${ENVIRONMENT})"
+create_or_update_job "daily-puzzle-tango${JOB_SUFFIX}" "TANGO" "Daily Tango puzzle generation at 8:00 AM UTC (${ENVIRONMENT})"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -162,7 +163,7 @@ if [ "$ENVIRONMENT" == "dev" ]; then
     echo "Test your changes safely without affecting production."
 else
     echo "Production scheduler jobs created!"
-    echo "Both Sudoku and ZIP puzzles will now generate automatically every day at 8:00 AM UTC!"
+    echo "All three games (Sudoku, ZIP, and Tango) will now generate automatically every day at 8:00 AM UTC!"
 fi
 
 echo "Check Firestore tomorrow to see the new puzzles."

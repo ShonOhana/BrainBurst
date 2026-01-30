@@ -18,7 +18,7 @@ from openai import OpenAI
 import functions_framework
 
 # Local imports
-from generators import SudokuGenerator, ZipGenerator
+from generators import SudokuGenerator, ZipGenerator, TangoGenerator
 from validators import SudokuValidator
 from firestore_writer import FirestoreWriter
 
@@ -53,8 +53,7 @@ db = firestore.client()
 GENERATORS = {
     "MINI_SUDOKU_6X6": SudokuGenerator(),  # Deterministic generator, no API key needed
     "ZIP": ZipGenerator(),  # ZIP puzzle generator
-    # Future games:
-    # "TANGO": TangoGenerator(),
+    "TANGO": TangoGenerator(),  # Tango puzzle generator
 }
 
 VALIDATORS = {
@@ -207,6 +206,9 @@ def _generate_and_store_puzzle(game_type: str, date_str: str, force: bool = Fals
         result_data["givens"] = sum(1 for row in payload["initialBoard"] for cell in row if cell != 0)
     elif game_type == "ZIP":
         result_data["dots"] = len(payload.get("dots", []))
+    elif game_type == "TANGO":
+        result_data["prefilled"] = len(payload.get("prefilled", []))
+        result_data["clues"] = len(payload.get("equalClues", [])) + len(payload.get("oppositeClues", []))
     
     return result_data
 
