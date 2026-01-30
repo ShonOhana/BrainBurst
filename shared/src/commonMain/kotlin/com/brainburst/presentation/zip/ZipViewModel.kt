@@ -41,7 +41,9 @@ data class ZipUiState(
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
     val hintPosition: Position? = null,
-    val hintType: HintType = HintType.None
+    val hintType: HintType = HintType.None,
+    val isHintOnCooldown: Boolean = false,
+    val hintCooldownProgress: Float = 0f
 )
 
 data class ZipDotUi(
@@ -103,6 +105,9 @@ class ZipViewModel(
     private var elapsedMillisWhenPaused: Long = 0L
     private var timerStartedAtMillis: Long = 0L
     private var isTimerRunning: Boolean = false
+    
+    // Hint cooldown state
+    private var hintCooldownJob: Job? = null
 
     init {
         loadPuzzle()
@@ -433,6 +438,9 @@ class ZipViewModel(
         val state = currentState ?: return
         val payloadData = payload ?: return
         
+        // Don't allow hint if on cooldown
+        if (_uiState.value.isHintOnCooldown) return
+        
         println("ZIP HINT: Starting hint calculation")
         println("ZIP HINT: Current path size: ${state.path.size}")
         
@@ -498,7 +506,43 @@ class ZipViewModel(
                     }
                     
                     resumeTimer()
+                    
+                    // Start hint cooldown
+                    startHintCooldown()
                 }
+            }
+        }
+    }
+    
+    private fun startHintCooldown() {
+        // Cancel any existing cooldown
+        hintCooldownJob?.cancel()
+        
+        // Set cooldown state
+        _uiState.value = _uiState.value.copy(
+            isHintOnCooldown = true,
+            hintCooldownProgress = 0f
+        )
+        
+        hintCooldownJob = viewModelScope.launch {
+            val cooldownDuration = 5000L // 5 seconds
+            val startTime = Clock.System.now().toEpochMilliseconds()
+            
+            while (true) {
+                val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
+                val progress = (elapsed.toFloat() / cooldownDuration).coerceIn(0f, 1f)
+                
+                _uiState.value = _uiState.value.copy(hintCooldownProgress = progress)
+                
+                if (elapsed >= cooldownDuration) {
+                    _uiState.value = _uiState.value.copy(
+                        isHintOnCooldown = false,
+                        hintCooldownProgress = 0f
+                    )
+                    break
+                }
+                
+                delay(50) // Update ~20fps for smooth animation
             }
         }
     }

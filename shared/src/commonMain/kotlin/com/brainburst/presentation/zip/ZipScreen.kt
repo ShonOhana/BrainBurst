@@ -274,27 +274,51 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Hint button (matching Sudoku style)
-                    Button(
-                        onClick = { viewModel.onHintPress() },
-                        modifier = Modifier.weight(1f).height(44.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF9810FA),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = !uiState.isCompleted
+                    // Hint button with cooldown animation
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
                     ) {
-                        Text(
-                            text = "💡",
-                            fontSize = 18.sp
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Hint",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Button(
+                            onClick = { viewModel.onHintPress() },
+                            modifier = Modifier.fillMaxSize(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF9810FA),
+                                contentColor = Color.White,
+                                disabledContainerColor = Color(0xFF9810FA).copy(alpha = 0.6f),
+                                disabledContentColor = Color.White.copy(alpha = 0.6f)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !uiState.isCompleted && !uiState.isHintOnCooldown
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "💡",
+                                    fontSize = 18.sp
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Hint",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                        
+                        // Cooldown progress overlay
+                        if (uiState.isHintOnCooldown) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(uiState.hintCooldownProgress)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.3f))
+                            )
+                        }
                     }
                     
                     // Reset button

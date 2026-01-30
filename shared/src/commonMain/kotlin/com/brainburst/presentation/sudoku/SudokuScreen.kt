@@ -280,7 +280,9 @@ fun SudokuScreen(viewModel: SudokuViewModel, adManager: com.brainburst.domain.ad
                         onHintClick = { viewModel.onHintPress() },
                         onSubmit = { viewModel.onSubmit() },
                         isComplete = uiState.isComplete,
-                        disabledNumbers = fullyPlacedNumbers
+                        disabledNumbers = fullyPlacedNumbers,
+                        isHintOnCooldown = uiState.isHintOnCooldown,
+                        hintCooldownProgress = uiState.hintCooldownProgress
                     )
                     
                     // Banner ad at bottom
@@ -486,7 +488,9 @@ fun NumberPad(
     onHintClick: () -> Unit,
     onSubmit: () -> Unit,
     isComplete: Boolean,
-    disabledNumbers: Set<Int> = emptySet()
+    disabledNumbers: Set<Int> = emptySet(),
+    isHintOnCooldown: Boolean = false,
+    hintCooldownProgress: Float = 0f
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -551,30 +555,51 @@ fun NumberPad(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Hint button
-            Button(
-                onClick = onHintClick,
+            // Hint button with cooldown animation
+            Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(44.dp),
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF9810FA),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !isComplete
+                    .height(44.dp)
             ) {
-                Text(
-                    text = "💡",
-                    fontSize = 18.sp
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Hint",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Button(
+                    onClick = onHintClick,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF9810FA),
+                        contentColor = Color.White,
+                        disabledContainerColor = Color(0xFF9810FA).copy(alpha = 0.6f),
+                        disabledContentColor = Color.White.copy(alpha = 0.6f)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isComplete && !isHintOnCooldown
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "💡",
+                            fontSize = 18.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Hint",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                
+                // Cooldown progress overlay
+                if (isHintOnCooldown) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(hintCooldownProgress)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.3f))
+                    )
+                }
             }
             
             // Clear button
