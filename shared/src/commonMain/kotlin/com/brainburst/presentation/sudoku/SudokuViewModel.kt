@@ -39,7 +39,13 @@ data class SudokuUiState(
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
     val isHintOnCooldown: Boolean = false,
-    val hintCooldownProgress: Float = 0f
+    val hintCooldownProgress: Float = 0f,
+    val completedRows: Set<Int> = emptySet(),
+    val completedColumns: Set<Int> = emptySet(),
+    val completedBlocks: Set<Pair<Int, Int>> = emptySet(),
+    val animatingRow: Int? = null,
+    val animatingColumn: Int? = null,
+    val animatingBlock: Pair<Int, Int>? = null
 )
 
 sealed class SudokuEvent {
@@ -270,6 +276,9 @@ class SudokuViewModel(
 
         // Update UI
         updateUiFromState()
+
+        // Check for completed rows, columns, or blocks
+        checkForCompletions(position)
 
         // Check if puzzle just became complete and stop timer immediately
         if (currentState?.isComplete() == true) {
@@ -579,5 +588,119 @@ class SudokuViewModel(
         pauseTimer() // This calls saveGameState() async
         // Also call blocking version to ensure save completes before process is killed
         saveGameStateBlocking()
+    }
+    
+    // Animation helpers
+    private fun checkForCompletions(position: Position) {
+        val board = currentState?.board ?: return
+        val row = position.row
+        val col = position.col
+        
+        // First, remove from completed sets if they're no longer complete
+        val updatedCompletedRows = _uiState.value.completedRows.filter { r ->
+            isRowComplete(board, r)
+        }.toSet()
+        
+        val updatedCompletedColumns = _uiState.value.completedColumns.filter { c ->
+            isColumnComplete(board, c)
+        }.toSet()
+        
+        val updatedCompletedBlocks = _uiState.value.completedBlocks.filter { (blockRow, blockCol) ->
+            isBlockCompleteByBlockId(board, blockRow, blockCol)
+        }.toSet()
+        
+        _uiState.value = _uiState.value.copy(
+            completedRows = updatedCompletedRows,
+            completedColumns = updatedCompletedColumns,
+            completedBlocks = updatedCompletedBlocks
+        )
+        
+        viewModelScope.launch {
+            var rowCompleted = false
+            var columnCompleted = false
+            
+            // Check if row is newly completed
+            if (row !in updatedCompletedRows && isRowComplete(board, row)) {
+                rowCompleted = true
+                val newCompletedRows = updatedCompletedRows + row
+                _uiState.value = _uiState.value.copy(
+                    completedRows = newCompletedRows,
+                    animatingRow = row
+                )
+                // Clear animation after delay
+                delay(600)
+                _uiState.value = _uiState.value.copy(animatingRow = null)
+            }
+            
+            // Check if column is newly completed
+            if (col !in updatedCompletedColumns && isColumnComplete(board, col)) {
+                columnCompleted = true
+                val newCompletedColumns = updatedCompletedColumns + col
+                _uiState.value = _uiState.value.copy(
+                    completedColumns = newCompletedColumns,
+                    animatingColumn = col
+                )
+                // Clear animation after delay
+                delay(600)
+                _uiState.value = _uiState.value.copy(animatingColumn = null)
+            }
+            
+            // Check if block is newly completed
+            // BUT don't animate if row or column was also completed (they take priority)
+            val blockId = getBlockId(row, col)
+            if (!rowCompleted && !columnCompleted && 
+                blockId !in updatedCompletedBlocks && 
+                isBlockComplete(board, row, col)) {
+                val newCompletedBlocks = updatedCompletedBlocks + blockId
+                _uiState.value = _uiState.value.copy(
+                    completedBlocks = newCompletedBlocks,
+                    animatingBlock = blockId
+                )
+                // Clear animation after delay
+                delay(600)
+                _uiState.value = _uiState.value.copy(animatingBlock = null)
+            }
+        }
+    }
+    
+    private fun isRowComplete(board: List<List<Int>>, row: Int): Boolean {
+        val rowValues = board[row]
+        // Check all cells are filled and no duplicates
+        if (rowValues.any { it == 0 }) return false
+        return rowValues.toSet().size == 6
+    }
+    
+    private fun isColumnComplete(board: List<List<Int>>, col: Int): Boolean {
+        val colValues = board.map { it[col] }
+        // Check all cells are filled and no duplicates
+        if (colValues.any { it == 0 }) return false
+        return colValues.toSet().size == 6
+    }
+    
+    private fun isBlockComplete(board: List<List<Int>>, row: Int, col: Int): Boolean {
+        // For 6x6 Sudoku, blocks are 2x3
+        val blockStartRow = (row / 2) * 2
+        val blockStartCol = (col / 3) * 3
+        return isBlockCompleteByBlockId(board, blockStartRow, blockStartCol)
+    }
+    
+    private fun isBlockCompleteByBlockId(board: List<List<Int>>, blockStartRow: Int, blockStartCol: Int): Boolean {
+        val blockValues = mutableListOf<Int>()
+        for (r in blockStartRow until blockStartRow + 2) {
+            for (c in blockStartCol until blockStartCol + 3) {
+                blockValues.add(board[r][c])
+            }
+        }
+        
+        // Check all cells are filled and no duplicates
+        if (blockValues.any { it == 0 }) return false
+        return blockValues.toSet().size == 6
+    }
+    
+    private fun getBlockId(row: Int, col: Int): Pair<Int, Int> {
+        // Return the top-left position of the block
+        val blockStartRow = (row / 2) * 2
+        val blockStartCol = (col / 3) * 3
+        return Pair(blockStartRow, blockStartCol)
     }
 }

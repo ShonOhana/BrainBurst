@@ -1,9 +1,11 @@
 package com.brainburst.presentation.sudoku
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,6 +16,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +30,9 @@ import com.brainburst.domain.game.Position
 import com.brainburst.platform.PlatformLifecycleHandler
 import com.brainburst.presentation.ads.BannerAdView
 import kotlinx.coroutines.delay
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.PI
 
 // Helper function to count number occurrences on the board
 private fun countNumberOccurrences(board: List<List<Int>>): Map<Int, Int> {
@@ -244,15 +251,21 @@ fun SudokuScreen(viewModel: SudokuViewModel, adManager: com.brainburst.domain.ad
                     // Sudoku board - responsive size with height constraint
                     val boardWidth = maxWidth * 0.92f
                     val maxBoardHeight = maxHeight * 0.45f
-                    SudokuBoard(
-                        board = uiState.board,
-                        fixedCells = uiState.fixedCells,
-                        selectedPosition = uiState.selectedPosition,
-                        invalidPositions = uiState.invalidPositions,
-                        onCellClick = { viewModel.onCellClick(it) },
-                        boardWidth = boardWidth,
-                        maxBoardHeight = maxBoardHeight
-                    )
+                    
+                    Box {
+                        SudokuBoard(
+                            board = uiState.board,
+                            fixedCells = uiState.fixedCells,
+                            selectedPosition = uiState.selectedPosition,
+                            invalidPositions = uiState.invalidPositions,
+                            onCellClick = { viewModel.onCellClick(it) },
+                            boardWidth = boardWidth,
+                            maxBoardHeight = maxBoardHeight,
+                            animatingRow = uiState.animatingRow,
+                            animatingColumn = uiState.animatingColumn,
+                            animatingBlock = uiState.animatingBlock
+                        )
+                    }
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
@@ -354,7 +367,10 @@ fun SudokuBoard(
     invalidPositions: List<Position>,
     onCellClick: (Position) -> Unit,
     boardWidth: Dp,
-    maxBoardHeight: Dp
+    maxBoardHeight: Dp,
+    animatingRow: Int? = null,
+    animatingColumn: Int? = null,
+    animatingBlock: Pair<Int, Int>? = null
 ) {
     if (board.isEmpty()) return
     
@@ -398,6 +414,14 @@ fun SudokuBoard(
                             val isSelected = position == selectedPosition
                             val isInvalid = position in invalidPositions
                             
+                            // Check if cell is in animating row, column, or block
+                            val blockStartRow = (row / 2) * 2
+                            val blockStartCol = (col / 3) * 3
+                            val isInAnimatingRow = animatingRow == row
+                            val isInAnimatingColumn = animatingColumn == col
+                            val isInAnimatingBlock = animatingBlock == Pair(blockStartRow, blockStartCol)
+                            val isAnimating = isInAnimatingRow || isInAnimatingColumn || isInAnimatingBlock
+                            
                             // Determine border widths based on position
                             val rightBorderWidth = when {
                                 col == size - 1 -> 0.dp // No border on last column
@@ -411,12 +435,23 @@ fun SudokuBoard(
                                 else -> 1.dp // Thin border
                             }
                             
+                            // Animation for completed rows/columns/blocks
+                            val scale by animateFloatAsState(
+                                targetValue = if (isAnimating) 1.1f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                )
+                            )
+                            
                             Box(
                                 modifier = Modifier
                                     .width(cellWidth)
                                     .height(cellHeight)
+                                    .scale(scale)
                                     .background(
                                         when {
+                                            isAnimating -> Color(0x402D5BE2) // Light yellow for animation
                                             isInvalid -> Color(0xFFFFCDD2)
                                             isSelected -> Color(0xFFBBDEFB)
                                             else -> Color.White
@@ -431,6 +466,10 @@ fun SudokuBoard(
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
+                                // Show explosion particles when animating
+                                if (isAnimating) {
+                                    ExplosionParticles()
+                                }
                                 // Cell content - responsive font size
                                 if (value != 0) {
                                     Text(
@@ -478,6 +517,50 @@ fun SudokuBoard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ExplosionParticles() {
+    // Create 8 particles in a circle
+    val particleCount = 8
+    
+    for (i in 0 until particleCount) {
+        val angle = (i * 2 * PI / particleCount).toFloat()
+        
+        // Animate particle offset
+        val infiniteTransition = rememberInfiniteTransition()
+        val offset by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 20f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(500, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Restart
+            )
+        )
+        
+        // Animate particle alpha
+        val alpha by infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(500, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            )
+        )
+        
+        val xOffset = cos(angle) * offset
+        val yOffset = sin(angle) * offset
+        
+        Box(
+            modifier = Modifier
+                .offset(x = xOffset.dp, y = yOffset.dp)
+                .size(4.dp)
+                .background(
+                    color = Color(0xFFFFD700).copy(alpha = alpha), // Gold color
+                    shape = CircleShape
+                )
+        )
     }
 }
 
