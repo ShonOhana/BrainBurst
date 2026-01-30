@@ -450,10 +450,18 @@ fun SudokuBoard(
                             
                             // Animation for completed rows/columns/blocks
                             val scale by animateFloatAsState(
-                                targetValue = if (isAnimating) 1.1f else 1f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
+                                targetValue = if (isAnimating) 1.03f else 1f,
+                                animationSpec = tween(
+                                    durationMillis = 250,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                            
+                            val highlightAlpha by animateFloatAsState(
+                                targetValue = if (isAnimating) 0.5f else 0f,
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    easing = FastOutSlowInEasing
                                 )
                             )
                             
@@ -464,11 +472,13 @@ fun SudokuBoard(
                                     .scale(scale)
                                     .background(
                                         when {
-                                            isAnimating -> Color(0x402D5BE2) // Light yellow for animation
                                             isInvalid -> Color(0xFFFFCDD2)
                                             isSelected -> Color(0xFFBBDEFB)
                                             else -> Color.White
                                         }
+                                    )
+                                    .background(
+                                        Color(0xFFE3F2FD).copy(alpha = highlightAlpha) // Very light blue animated highlight
                                     )
                                     .border(
                                         width = 0.dp,
@@ -545,19 +555,19 @@ fun ExplosionParticles() {
         val infiniteTransition = rememberInfiniteTransition()
         val offset by infiniteTransition.animateFloat(
             initialValue = 0f,
-            targetValue = 20f,
+            targetValue = 18f,
             animationSpec = infiniteRepeatable(
-                animation = tween(500, easing = FastOutSlowInEasing),
+                animation = tween(300, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Restart
             )
         )
         
         // Animate particle alpha
         val alpha by infiniteTransition.animateFloat(
-            initialValue = 1f,
+            initialValue = 0.6f,
             targetValue = 0f,
             animationSpec = infiniteRepeatable(
-                animation = tween(500, easing = LinearEasing),
+                animation = tween(300, easing = FastOutLinearInEasing),
                 repeatMode = RepeatMode.Restart
             )
         )
@@ -568,9 +578,9 @@ fun ExplosionParticles() {
         Box(
             modifier = Modifier
                 .offset(x = xOffset.dp, y = yOffset.dp)
-                .size(4.dp)
+                .size(5.dp)
                 .background(
-                    color = Color(0xFFFFD700).copy(alpha = alpha), // Gold color
+                    color = Color(0xFF64B5F6).copy(alpha = alpha), // Light blue color
                     shape = CircleShape
                 )
         )

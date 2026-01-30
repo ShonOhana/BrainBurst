@@ -636,7 +636,7 @@ class SudokuViewModel(
                     animatingRow = row
                 )
                 // Clear animation after delay
-                delay(600)
+                delay(350)
                 _uiState.value = _uiState.value.copy(animatingRow = null)
             }
             
@@ -649,7 +649,7 @@ class SudokuViewModel(
                     animatingColumn = col
                 )
                 // Clear animation after delay
-                delay(600)
+                delay(350)
                 _uiState.value = _uiState.value.copy(animatingColumn = null)
             }
             
@@ -665,7 +665,7 @@ class SudokuViewModel(
                     animatingBlock = blockId
                 )
                 // Clear animation after delay
-                delay(600)
+                delay(350)
                 _uiState.value = _uiState.value.copy(animatingBlock = null)
             }
         }
