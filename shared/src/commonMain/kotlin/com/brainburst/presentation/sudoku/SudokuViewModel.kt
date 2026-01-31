@@ -46,7 +46,8 @@ data class SudokuUiState(
     val animatingRow: Int? = null,
     val animatingColumn: Int? = null,
     val animatingBlock: Pair<Int, Int>? = null,
-    val showCompletionAnimation: Boolean = false
+    val showCompletionAnimation: Boolean = false,
+    val hintCells: Set<Position> = emptySet()
 )
 
 sealed class SudokuEvent {
@@ -271,6 +272,9 @@ class SudokuViewModel(
         val state = currentState ?: return
         val definition = sudokuDefinition ?: return
 
+        // Clear hint styling when user makes a move
+        _uiState.value = _uiState.value.copy(hintCells = emptySet())
+
         // Apply move
         val move = SudokuMove(position, number)
         currentState = definition.applyMove(state, move)
@@ -305,19 +309,23 @@ class SudokuViewModel(
         // Pause the timer
         pauseTimer()
         
-        // Find all empty cells that are not fixed
-        val emptyCells = mutableListOf<Position>()
+        // Find all cells that need correction (empty OR incorrect) and are not fixed
+        val cellsToCorrect = mutableListOf<Position>()
         for (row in state.board.indices) {
             for (col in state.board[row].indices) {
                 val position = Position(row, col)
-                if (state.board[row][col] == 0 && position !in state.fixedCells) {
-                    emptyCells.add(position)
+                val currentValue = state.board[row][col]
+                val correctValue = payloadData.solutionBoard[row][col]
+                
+                // Include cells that are: not fixed AND (empty OR incorrect)
+                if (position !in state.fixedCells && currentValue != correctValue) {
+                    cellsToCorrect.add(position)
                 }
             }
         }
         
-        // If no empty cells, nothing to hint
-        if (emptyCells.isEmpty()) {
+        // If no cells need correction, nothing to hint
+        if (cellsToCorrect.isEmpty()) {
             resumeTimer()
             return
         }
@@ -326,12 +334,17 @@ class SudokuViewModel(
         viewModelScope.launch {
             adManager.showRewardedAd {
                 // After user watches full ad and earns reward, give hint
-                val randomCell = emptyCells.random()
+                val randomCell = cellsToCorrect.random()
                 val correctValue = payloadData.solutionBoard[randomCell.row][randomCell.col]
                 
                 // Apply the correct value
                 val move = SudokuMove(randomCell, correctValue)
                 currentState = sudokuDefinition?.applyMove(state, move)
+                
+                // Mark this cell as a hint
+                _uiState.value = _uiState.value.copy(
+                    hintCells = _uiState.value.hintCells + randomCell
+                )
                 
                 // Update UI
                 updateUiFromState()
@@ -451,6 +464,7 @@ class SudokuViewModel(
                 )
             }
         } else {
+            // Solution is incorrect - don't disable the board, just show error
             _events.value = SudokuEvent.ValidationError("Solution is incorrect. Please check your answers.")
         }
     }

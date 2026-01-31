@@ -267,7 +267,8 @@ fun SudokuScreen(viewModel: SudokuViewModel, adManager: com.brainburst.domain.ad
                             maxBoardHeight = maxBoardHeight,
                             animatingRow = uiState.animatingRow,
                             animatingColumn = uiState.animatingColumn,
-                            animatingBlock = uiState.animatingBlock
+                            animatingBlock = uiState.animatingBlock,
+                            hintCells = uiState.hintCells
                         )
                     }
                     
@@ -383,7 +384,8 @@ fun SudokuBoard(
     maxBoardHeight: Dp,
     animatingRow: Int? = null,
     animatingColumn: Int? = null,
-    animatingBlock: Pair<Int, Int>? = null
+    animatingBlock: Pair<Int, Int>? = null,
+    hintCells: Set<Position> = emptySet()
 ) {
     if (board.isEmpty()) return
     
@@ -426,6 +428,7 @@ fun SudokuBoard(
                             val isFixed = position in fixedCells
                             val isSelected = position == selectedPosition
                             val isInvalid = position in invalidPositions
+                            val isHint = position in hintCells
                             
                             // Check if cell is in animating row, column, or block
                             val blockStartRow = (row / 2) * 2
@@ -474,6 +477,7 @@ fun SudokuBoard(
                                         when {
                                             isInvalid -> Color(0xFFFFCDD2)
                                             isSelected -> Color(0xFFBBDEFB)
+                                            isHint -> Color(0xFFFFFDE7) // Very light yellow for hints
                                             else -> Color.White
                                         }
                                     )
@@ -495,16 +499,28 @@ fun SudokuBoard(
                                 }
                                 // Cell content - responsive font size
                                 if (value != 0) {
-                                    Text(
-                                        text = value.toString(),
-                                        fontSize = (cellWidth.value * 0.5f).sp,
-                                        fontWeight = if (isFixed) FontWeight.Bold else FontWeight.Normal,
-                                        color = when {
-                                            isInvalid -> Color(0xFFD32F2F)
-                                            isFixed -> Color(0xFF1A1A1A)
-                                            else -> Color(0xFF6200EA)
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = value.toString(),
+                                            fontSize = (cellWidth.value * 0.5f).sp,
+                                            fontWeight = if (isFixed) FontWeight.Bold else FontWeight.Normal,
+                                            color = when {
+                                                isInvalid -> Color(0xFFD32F2F)
+                                                isFixed -> Color(0xFF1A1A1A)
+                                                isHint -> Color(0xFFF57F17) // Amber/yellow for hints
+                                                else -> Color(0xFF6200EA)
+                                            }
+                                        )
+                                        // Show lightbulb icon for hint cells
+                                        if (isHint) {
+                                            Text(
+                                                text = "💡",
+                                                fontSize = (cellWidth.value * 0.2f).sp
+                                            )
                                         }
-                                    )
+                                    }
                                 }
                                 
                                 // Right border
@@ -618,7 +634,7 @@ fun NumberPad(
                         contentColor = Color.Black
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isComplete && number !in disabledNumbers
+                    enabled = number !in disabledNumbers
                 ) {
                     Text(
                         text = number.toString(),
@@ -677,7 +693,7 @@ fun NumberPad(
                         disabledContentColor = Color.White.copy(alpha = 0.6f)
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isComplete && !isHintOnCooldown
+                    enabled = !isHintOnCooldown
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -718,8 +734,7 @@ fun NumberPad(
                     containerColor = Color.White,
                     contentColor = Color.Black
                 ),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !isComplete
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
