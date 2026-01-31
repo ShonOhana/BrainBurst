@@ -230,8 +230,8 @@ fun GameCard(
     val completedCardBorder = Color(0xFF884CE9)
     val leaderboardButtonColor = Color.White
 
-    // Determine if this is a SUDOKU or ZIP game that should have gradient
-    val isGradientGame = gameState.gameType == GameType.MINI_SUDOKU_6X6 || gameState.gameType == GameType.ZIP
+    // Determine if this is a SUDOKU, ZIP, or TANGO game that should have gradient
+    val isGradientGame = gameState.gameType == GameType.MINI_SUDOKU_6X6 || gameState.gameType == GameType.ZIP || gameState.gameType == GameType.TANGO
     val shouldUseGradient = isGradientGame && (gameState is GameStateUI.Available || gameState is GameStateUI.Completed)
 
     val cardColor = when (gameState) {
