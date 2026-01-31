@@ -6,10 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -123,13 +126,12 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                     .fillMaxSize()
                     .statusBarsPadding()
                     .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
             ) {
-                // Back button
+                // Header (fixed at top)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.Start
                 ) {
                     IconButton(
@@ -145,220 +147,257 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                     }
                 }
                 
-                // Title with gradient (matching Sudoku)
-                Text(
-                    text = "Zip",
-                    style = TextStyle(
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color(0xFF9810FA),
-                                Color(0xFF155DFC)
+                // Scrollable content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    // Title with gradient (matching Sudoku)
+                    Text(
+                        text = "Zip",
+                        style = TextStyle(
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFF9810FA),
+                                    Color(0xFF155DFC)
+                                )
                             )
                         )
                     )
-                )
-                
-                // Subtitle
-                Text(
-                    text = "Use pathfinding skills to move through the grid",
-                    fontSize = 12.sp,
-                    color = Color(0xFF6200EA).copy(alpha = 0.7f)
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Stats Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
+                    
+                    // Subtitle
+                    Text(
+                        text = "Use pathfinding skills to move through the grid",
+                        fontSize = 12.sp,
+                        color = Color(0xFF6200EA).copy(alpha = 0.7f)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Stats Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        // Time
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = uiState.elapsedTimeFormatted,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6200EA)
-                            )
-                            Text(
-                                text = "Time",
-                                fontSize = 10.sp,
-                                color = Color(0xFF9E9E9E)
-                            )
-                        }
-                        
-                        Divider(
+                        Row(
                             modifier = Modifier
-                                .height(24.dp)
-                                .width(1.dp),
-                            color = Color(0xFFE0E0E0)
-                        )
-                        
-                        // Dots connected
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "${uiState.lastConnectedDotIndex} / ${uiState.dots.size}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6200EA)
-                            )
-                            Text(
-                                text = "Connected",
-                                fontSize = 10.sp,
-                                color = Color(0xFF9E9E9E)
-                            )
-                        }
-                        
-                        Divider(
-                            modifier = Modifier
-                                .height(24.dp)
-                                .width(1.dp),
-                            color = Color(0xFFE0E0E0)
-                        )
-                        
-                        // Moves
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "${uiState.movesCount}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6200EA)
-                            )
-                            Text(
-                                text = "Moves",
-                                fontSize = 10.sp,
-                                color = Color(0xFF9E9E9E)
-                            )
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // ZIP Grid
-                ZipGrid(
-                    gridSize = uiState.gridSize,
-                    dots = uiState.dots,
-                    path = uiState.path,
-                    hintPosition = uiState.hintPosition,
-                    hintType = uiState.hintType,
-                    walls = uiState.walls,
-                    onDragStart = { position -> viewModel.onDragStart(position) },
-                    onDragMove = { position -> viewModel.onDragMove(position) },
-                    onDragEnd = { viewModel.onDragEnd() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Control buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // Hint button with cooldown animation
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                    ) {
-                        Button(
-                            onClick = { viewModel.onHintPress() },
-                            modifier = Modifier.fillMaxSize(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF9810FA),
-                                contentColor = Color.White,
-                                disabledContainerColor = Color(0xFF9810FA).copy(alpha = 0.6f),
-                                disabledContentColor = Color.White.copy(alpha = 0.6f)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            enabled = !uiState.isCompleted && !uiState.isHintOnCooldown
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                            // Time
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Text(
-                                    text = "💡",
-                                    fontSize = 18.sp
+                                    text = uiState.elapsedTimeFormatted,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6200EA)
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "Hint",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium
+                                    text = "Time",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
+                            }
+                            
+                            Divider(
+                                modifier = Modifier
+                                    .height(24.dp)
+                                    .width(1.dp),
+                                color = Color(0xFFE0E0E0)
+                            )
+                            
+                            // Dots connected
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "${uiState.lastConnectedDotIndex} / ${uiState.dots.size}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6200EA)
+                                )
+                                Text(
+                                    text = "Connected",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF9E9E9E)
+                                )
+                            }
+                            
+                            Divider(
+                                modifier = Modifier
+                                    .height(24.dp)
+                                    .width(1.dp),
+                                color = Color(0xFFE0E0E0)
+                            )
+                            
+                            // Moves
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "${uiState.movesCount}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6200EA)
+                                )
+                                Text(
+                                    text = "Moves",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF9E9E9E)
                                 )
                             }
                         }
-                        
-                        // Cooldown progress overlay
-                        if (uiState.isHintOnCooldown) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(uiState.hintCooldownProgress)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.White.copy(alpha = 0.3f))
-                            )
-                        }
                     }
                     
-                    // Reset button
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Clear Button
                     Button(
-                        onClick = { viewModel.onResetPress() },
-                        modifier = Modifier.weight(1f).height(44.dp),
+                        onClick = { viewModel.onClearClick() },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Black
+                            containerColor = Color(0xFF6200EA)
                         ),
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = !uiState.isCompleted
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Reset",
-                            modifier = Modifier.size(18.dp)
+                            contentDescription = "Clear",
+                            modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Reset",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text("Clear")
                     }
-                }
-                
-                // Banner ad at bottom
-                Spacer(modifier = Modifier.height(8.dp))
-                BannerAdView(adManager = adManager)
-                
-                if (uiState.isSubmitting) {
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // ZIP Grid
+                    ZipGrid(
+                        gridSize = uiState.gridSize,
+                        dots = uiState.dots,
+                        path = uiState.path,
+                        hintPosition = uiState.hintPosition,
+                        hintType = uiState.hintType,
+                        walls = uiState.walls,
+                        onDragStart = { position -> viewModel.onDragStart(position) },
+                        onDragMove = { position -> viewModel.onDragMove(position) },
+                        onDragEnd = { viewModel.onDragEnd() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Control buttons (Undo and Hint swapped)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // Undo button (was Reset)
+                        Button(
+                            onClick = { viewModel.onUndoPress() },
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !uiState.isCompleted
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Undo",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Undo",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        
+                        // Hint button with cooldown animation
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        ) {
+                            Button(
+                                onClick = { viewModel.onHintPress() },
+                                modifier = Modifier.fillMaxSize(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF9810FA),
+                                    contentColor = Color.White,
+                                    disabledContainerColor = Color(0xFF9810FA).copy(alpha = 0.6f),
+                                    disabledContentColor = Color.White.copy(alpha = 0.6f)
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                enabled = !uiState.isCompleted && !uiState.isHintOnCooldown
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "💡",
+                                        fontSize = 18.sp
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Hint",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            
+                            // Cooldown progress overlay
+                            if (uiState.isHintOnCooldown) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(uiState.hintCooldownProgress)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color.White.copy(alpha = 0.3f))
+                                )
+                            }
+                        }
+                    }
+                    
                     Spacer(modifier = Modifier.height(16.dp))
-                    CircularProgressIndicator()
+                    
+                    // How to Play Section
+                    HowToPlayZipSection()
+                    
+                    // Banner ad at bottom
+                    Spacer(modifier = Modifier.height(8.dp))
+                    BannerAdView(adManager = adManager)
+                    
+                    if (uiState.isSubmitting) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CircularProgressIndicator()
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -370,6 +409,167 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.75f))
             )
+        }
+    }
+}
+
+@Composable
+fun HowToPlayZipSection() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "How to play",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF6200EA)
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Rule 1
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Connect all numbered dots in order from 1 to the last number by drawing a continuous path through the grid.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 2
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Draw your path by dragging your finger from cell to cell. You can move horizontally or vertically (not diagonally).",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 3
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Black walls block your path - you cannot cross them.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 4
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Your path must visit every cell on the grid exactly once.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 5
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "To go back, drag to the previous cell. Use the Undo button to undo one step.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 6
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Complete the puzzle by connecting all dots in order while filling every cell.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
         }
     }
 }

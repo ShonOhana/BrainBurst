@@ -570,6 +570,35 @@ class ZipViewModel(
 
         updateUiFromState()
     }
+    
+    fun onClearClick() {
+        val definition = zipDefinition ?: return
+        val payloadData = payload ?: return
+        val id = puzzleId ?: return
+        
+        // Create fresh initial state
+        currentState = definition.initialState(payloadData)
+        
+        // Reset timer
+        pauseTimer()
+        elapsedMillisWhenPaused = 0L
+        
+        // Update UI
+        updateUiFromState()
+        
+        // Clear saved state
+        viewModelScope.launch {
+            gameStateRepository.clearGameState(id)
+        }
+        
+        // Restart timer
+        resumeTimer()
+    }
+    
+    fun onUndoPress() {
+        // Just call the existing removeLastCell function
+        removeLastCell()
+    }
 
     private fun onSubmit() {
         val state = currentState ?: return
