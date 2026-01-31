@@ -6,9 +6,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -95,12 +98,12 @@ fun TangoScreen(viewModel: TangoViewModel) {
                     .fillMaxSize()
                     .statusBarsPadding()
                     .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header
+                // Header (fixed at top)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.Start
                 ) {
                     IconButton(
@@ -116,94 +119,294 @@ fun TangoScreen(viewModel: TangoViewModel) {
                     }
                 }
                 
-                Text(
-                    text = "Tango",
-                    style = TextStyle(
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color(0xFF9810FA),
-                                Color(0xFF155DFC)
+                // Scrollable content
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Tango",
+                        style = TextStyle(
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFF9810FA),
+                                    Color(0xFF155DFC)
+                                )
                             )
                         )
                     )
-                )
-                
-                Text(
-                    text = "Fill the grid with sun and moon symbols",
-                    fontSize = 12.sp,
-                    color = Color(0xFF6200EA).copy(alpha = 0.7f)
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Stats Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                    
+                    Text(
+                        text = "Fill the grid with sun and moon symbols",
+                        fontSize = 12.sp,
+                        color = Color(0xFF6200EA).copy(alpha = 0.7f)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Stats Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Text(
-                                text = uiState.elapsedTimeFormatted,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6200EA)
-                            )
-                            Text(
-                                text = "Time",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-                        
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = uiState.movesCount.toString(),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6200EA)
-                            )
-                            Text(
-                                text = "Moves",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = uiState.elapsedTimeFormatted,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6200EA)
+                                )
+                                Text(
+                                    text = "Time",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                            
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = uiState.movesCount.toString(),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6200EA)
+                                )
+                                Text(
+                                    text = "Moves",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Clear Button
+                    Button(
+                        onClick = { viewModel.onClearClick() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF6200EA)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Clear",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Clear")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Grid
+                    TangoGrid(
+                        cells = uiState.cells,
+                        fixedCells = uiState.fixedCells,
+                        selectedPosition = uiState.selectedPosition,
+                        invalidPositions = uiState.invalidPositions,
+                        equalClues = uiState.equalClues,
+                        oppositeClues = uiState.oppositeClues,
+                        onCellClick = { position -> viewModel.onCellClick(position) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // How to Play Section
+                    HowToPlaySection()
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Grid
-                TangoGrid(
-                    cells = uiState.cells,
-                    fixedCells = uiState.fixedCells,
-                    selectedPosition = uiState.selectedPosition,
-                    invalidPositions = uiState.invalidPositions,
-                    equalClues = uiState.equalClues,
-                    oppositeClues = uiState.oppositeClues,
-                    onCellClick = { position -> viewModel.onCellClick(position) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
+            }
+        }
+    }
+}
+
+@Composable
+fun HowToPlaySection() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "How to play",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF6200EA)
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Rule 1
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
                 )
-                
-                Spacer(modifier = Modifier.height(16.dp))
+                Column {
+                    Text(
+                        text = "Fill the grid so that each cell contains either a sun (☀) or a moon (🌙).",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 2
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "No more than 2 ☀ or 🌙 may be next to each other, either vertically or horizontally.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Canvas(modifier = Modifier.size(16.dp)) {
+                            drawCircle(color = Color(0xFFFFA500), radius = 8.dp.toPx())
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Canvas(modifier = Modifier.size(16.dp)) {
+                            drawCircle(color = Color(0xFFFFA500), radius = 8.dp.toPx())
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("✓", fontSize = 14.sp, color = Color(0xFF4CAF50))
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Canvas(modifier = Modifier.size(16.dp)) {
+                            drawCircle(color = Color(0xFFFFA500), radius = 8.dp.toPx())
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Canvas(modifier = Modifier.size(16.dp)) {
+                            drawCircle(color = Color(0xFFFFA500), radius = 8.dp.toPx())
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Canvas(modifier = Modifier.size(16.dp)) {
+                            drawCircle(color = Color(0xFFFFA500), radius = 8.dp.toPx())
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("✗", fontSize = 14.sp, color = Color(0xFFE91E63))
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 3
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Each row (and column) must contain the same number of ☀ and 🌙.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 4
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Cells separated by an = sign must be of the same type.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Rule 5
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "•",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Column {
+                    Text(
+                        text = "Cells separated by an × must be of different types.",
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        lineHeight = 20.sp
+                    )
+                }
             }
         }
     }

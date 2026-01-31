@@ -381,6 +381,31 @@ class TangoViewModel(
         saveGameState()
         navigator.navigateTo(Screen.Home)
     }
+    
+    fun onClearClick() {
+        val definition = tangoDefinition ?: return
+        val p = payload ?: return
+        val id = puzzleId ?: return
+        
+        // Create fresh initial state
+        currentState = definition.initialState(p)
+        
+        // Reset timer
+        stopTimer()
+        elapsedMillisWhenPaused = 0L
+        
+        // Update UI
+        validateCurrentState()
+        updateUiFromState()
+        
+        // Clear saved state
+        viewModelScope.launch {
+            gameStateRepository.clearGameState(id)
+        }
+        
+        // Restart timer
+        startTimer()
+    }
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
