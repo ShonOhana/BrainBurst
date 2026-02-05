@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -213,6 +214,14 @@ fun HomeScreen(viewModel: HomeViewModel) {
             )
             */
         }
+    }
+    
+    // Notification permission prompt dialog
+    if (uiState.showNotificationPrompt) {
+        NotificationPromptDialog(
+            onDismiss = { viewModel.onNotificationPromptDismiss() },
+            onAccept = { viewModel.onNotificationPromptAccept() }
+        )
     }
 }
 
@@ -738,3 +747,47 @@ fun calculateTimeUntil8UTC(): String {
     }
 }
 
+@Composable
+fun NotificationPromptDialog(
+    onDismiss: () -> Unit,
+    onAccept: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = androidx.compose.material.icons.Icons.Default.Notifications,
+                contentDescription = null,
+                tint = Color(0xFF9810FA),
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Stay Updated!",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "Get notified when new daily puzzles are ready. Never miss a challenge!",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onAccept,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF9810FA)
+                )
+            ) {
+                Text("Enable Notifications")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Not Now")
+            }
+        }
+    )
+}

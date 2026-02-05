@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
@@ -25,7 +26,8 @@ data class SettingsUiState(
     val passwordUpdateError: String? = null,
     val passwordUpdateSuccess: Boolean = false,
     val permissionDenied: Boolean = false,
-    val showLogoutDialog: Boolean = false
+    val showLogoutDialog: Boolean = false,
+    val isAwaitingPermissionGrant: Boolean = false  // Track if we're waiting for user to grant permission
 )
 
 class SettingsViewModel(
@@ -42,6 +44,45 @@ class SettingsViewModel(
     init {
         observeAuthState()
         observeNotificationPreference()
+    }
+    
+    /**
+     * Check permission status when user returns to settings screen
+     * (e.g., after granting permission in phone settings)
+     */
+    fun onScreenResumed() {
+        viewModelScope.launch {
+            val hasPermission = notificationManager.hasNotificationPermission()
+            val prefsEnabled = preferencesRepository.getNotificationsEnabled().first()
+            val isAwaitingPermission = _uiState.value.isAwaitingPermissionGrant
+            
+            // If we sent user to settings and they now have permission, enable notifications
+            if (isAwaitingPermission && hasPermission) {
+                preferencesRepository.setNotificationsEnabled(true)
+                notificationManager.scheduleDailyNotifications()
+                _uiState.value = _uiState.value.copy(
+                    notificationsEnabled = true,
+                    permissionDenied = false,
+                    isAwaitingPermissionGrant = false
+                )
+            }
+            // If user revoked permission in phone settings, disable notifications in app
+            else if (!hasPermission && prefsEnabled) {
+                preferencesRepository.setNotificationsEnabled(false)
+                notificationManager.cancelDailyNotifications()
+                _uiState.value = _uiState.value.copy(
+                    notificationsEnabled = false,
+                    permissionDenied = false,
+                    isAwaitingPermissionGrant = false
+                )
+            }
+            // Clear the awaiting flag if still set
+            else if (isAwaitingPermission) {
+                _uiState.value = _uiState.value.copy(
+                    isAwaitingPermissionGrant = false
+                )
+            }
+        }
     }
     
     private fun observeAuthState() {
@@ -165,31 +206,17 @@ class SettingsViewModel(
                         notificationManager.scheduleDailyNotifications()
                         _uiState.value = _uiState.value.copy(
                             notificationsEnabled = true,
-                            permissionDenied = false
+                            permissionDenied = false,
+                            isAwaitingPermissionGrant = false
                         )
                     } else {
-                        // Need to request permission
+                        // Need to request permission - open settings and mark that we're awaiting grant
+                        _uiState.value = _uiState.value.copy(
+                            notificationsEnabled = false,
+                            permissionDenied = false,
+                            isAwaitingPermissionGrant = true
+                        )
                         notificationManager.requestNotificationPermission()
-                        
-                        // Check again after a short delay (permission might be auto-granted)
-                        kotlinx.coroutines.delay(500)
-                        val hasPermissionNow = notificationManager.hasNotificationPermission()
-                        
-                        if (hasPermissionNow) {
-                            // Permission was granted
-                            preferencesRepository.setNotificationsEnabled(true)
-                            notificationManager.scheduleDailyNotifications()
-                            _uiState.value = _uiState.value.copy(
-                                notificationsEnabled = true,
-                                permissionDenied = false
-                            )
-                        } else {
-                            // Permission was denied or dialog is still showing
-                            _uiState.value = _uiState.value.copy(
-                                notificationsEnabled = false,
-                                permissionDenied = true
-                            )
-                        }
                     }
                 } else {
                     // Disabling notifications
@@ -197,7 +224,8 @@ class SettingsViewModel(
                     notificationManager.cancelDailyNotifications()
                     _uiState.value = _uiState.value.copy(
                         notificationsEnabled = false,
-                        permissionDenied = false
+                        permissionDenied = false,
+                        isAwaitingPermissionGrant = false
                     )
                 }
             } catch (e: Exception) {
@@ -205,7 +233,8 @@ class SettingsViewModel(
                 // Revert the toggle if there's an error
                 _uiState.value = _uiState.value.copy(
                     notificationsEnabled = !enabled,
-                    permissionDenied = false
+                    permissionDenied = false,
+                    isAwaitingPermissionGrant = false
                 )
             }
         }

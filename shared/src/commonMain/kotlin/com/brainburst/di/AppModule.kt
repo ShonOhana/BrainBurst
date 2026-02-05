@@ -81,7 +81,7 @@ val appModule = module {
     // ViewModels
     factory { SplashViewModel(get(), get(), get()) }
     factory { AuthViewModel(get(), get(), get(), get()) }
-    single { HomeViewModel(get(), get(), get(), get(), get(), get()) }  // Single scope to persist cache across navigation
+    single { HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }  // Single scope to persist cache across navigation
     factory { SettingsViewModel(get(), get(), get(), get(), get(), get()) }
     factory { SudokuViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { ZipViewModel(get(), get(), get(), get(), get(), get(), get()) }

@@ -25,17 +25,24 @@ class DailyNotificationWorker(
     
     override suspend fun doWork(): Result {
         try {
+            println("DailyNotificationWorker: Starting work at ${System.currentTimeMillis()}")
+            
             // Check if notifications are enabled
             val notificationsEnabled = preferencesRepository.getNotificationsEnabled().first()
+            println("DailyNotificationWorker: Notifications enabled = $notificationsEnabled")
             
             if (!notificationsEnabled) {
+                println("DailyNotificationWorker: Notifications disabled, skipping")
                 return Result.success()
             }
             
             // Check if user is logged in
             val currentUser = authRepository.currentUser.value
+            println("DailyNotificationWorker: Current user = ${currentUser?.uid}")
+            
             if (currentUser == null) {
                 // User not logged in, don't send notification
+                println("DailyNotificationWorker: No user logged in, skipping")
                 return Result.success()
             }
             
@@ -46,26 +53,34 @@ class DailyNotificationWorker(
                     gameType = gameType
                 ).getOrNull() ?: false
                 
+                println("DailyNotificationWorker: $gameType completed = $hasCompleted")
+                
                 // Return true if this puzzle is NOT completed (i.e., unsolved)
                 !hasCompleted
             }
             
+            println("DailyNotificationWorker: Has unsolved puzzle = $hasUnsolvedPuzzle")
+            
             // Only send notification if there's at least one unsolved puzzle
             if (!hasUnsolvedPuzzle) {
                 // User has solved all puzzles, don't send notification
+                println("DailyNotificationWorker: All puzzles solved, skipping notification")
                 return Result.success()
             }
             
             // Show the notification
+            println("DailyNotificationWorker: Showing notification")
             val notificationManager = NotificationManager(applicationContext)
             notificationManager.showNotification(
                 title = "New Daily Puzzle! 🧩",
                 message = "Today's brain teaser is ready. Start solving now!"
             )
             
+            println("DailyNotificationWorker: Work completed successfully")
             return Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
+            println("DailyNotificationWorker: Error occurred - ${e.message}")
             return Result.retry()
         }
     }

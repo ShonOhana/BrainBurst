@@ -45,22 +45,35 @@ actual class NotificationManager(
     }
     
     actual suspend fun scheduleDailyNotifications() {
-        // Schedule daily work at 9 AM (when new puzzles are generated)
+        // Schedule daily work at 8:00 AM UTC (when new puzzles are generated)
+        val initialDelay = calculateInitialDelay()
+        
+        println("NotificationManager: Scheduling notifications")
+        println("NotificationManager: Initial delay = ${initialDelay / 1000 / 60} minutes")
+        
+        val constraints = androidx.work.Constraints.Builder()
+            .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+            .build()
+        
         val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyNotificationWorker>(
             24, TimeUnit.HOURS
         ).setInitialDelay(
-            calculateInitialDelay(), TimeUnit.MILLISECONDS
-        ).build()
+            initialDelay, TimeUnit.MILLISECONDS
+        ).setConstraints(constraints)
+        .build()
         
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             WORK_NAME,
-            ExistingPeriodicWorkPolicy.REPLACE,  // REPLACE so new schedules override old ones
+            ExistingPeriodicWorkPolicy.UPDATE,
             dailyWorkRequest
         )
+        
+        println("NotificationManager: Notifications scheduled successfully")
     }
     
     actual suspend fun cancelDailyNotifications() {
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+        println("NotificationManager: Cancelled all notification work")
     }
     
     actual suspend fun hasNotificationPermission(): Boolean {
@@ -105,9 +118,15 @@ actual class NotificationManager(
     /**
      * Show a notification immediately (used by the worker)
      */
-    suspend fun showNotification(title: String, message: String) {
-        if (!hasNotificationPermission()) {
-            return
+    fun showNotification(title: String, message: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
         }
         
         // Create intent to open the app
@@ -134,16 +153,16 @@ actual class NotificationManager(
     private fun calculateInitialDelay(): Long {
         val now = System.currentTimeMillis()
         
-        // Use UTC timezone to match backend puzzle generation (9 AM UTC)
+        // Use UTC timezone to match backend puzzle generation (8:00 AM UTC)
         val utcTimeZone = java.util.TimeZone.getTimeZone("UTC")
         val calendar = java.util.Calendar.getInstance(utcTimeZone).apply {
             timeInMillis = now
-            set(java.util.Calendar.HOUR_OF_DAY, 9)  // 9 AM UTC
+            set(java.util.Calendar.HOUR_OF_DAY, 8)  // 8:00 AM UTC
             set(java.util.Calendar.MINUTE, 0)
             set(java.util.Calendar.SECOND, 0)
             set(java.util.Calendar.MILLISECOND, 0)
             
-            // If 9 AM UTC has already passed today, schedule for tomorrow
+            // If 8:00 AM UTC has already passed today, schedule for tomorrow
             if (timeInMillis <= now) {
                 add(java.util.Calendar.DAY_OF_YEAR, 1)
             }

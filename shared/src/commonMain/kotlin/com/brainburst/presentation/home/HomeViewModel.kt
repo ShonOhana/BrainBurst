@@ -4,7 +4,9 @@ import com.brainburst.domain.admin.AdminPuzzleUploader
 import com.brainburst.domain.ads.AdManager
 import com.brainburst.domain.model.GameType
 import com.brainburst.domain.model.User
+import com.brainburst.domain.notifications.NotificationManager
 import com.brainburst.domain.repository.AuthRepository
+import com.brainburst.domain.repository.PreferencesRepository
 import com.brainburst.domain.repository.PuzzleRepository
 import com.brainburst.presentation.navigation.Navigator
 import com.brainburst.presentation.navigation.Screen
@@ -12,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -23,7 +26,9 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,  // True when re-checking completion status after returning from game
     val errorMessage: String? = null,
-    val adminMessage: String? = null  // For admin upload feedback
+    val adminMessage: String? = null,  // For admin upload feedback
+    val showNotificationPrompt: Boolean = false,  // Show notification permission prompt
+    val hasCheckedNotificationPermission: Boolean = false  // Track if we've already shown the prompt
 )
 
 class HomeViewModel(
@@ -32,7 +37,9 @@ class HomeViewModel(
     private val navigator: Navigator,
     private val viewModelScope: CoroutineScope,
     private val adminPuzzleUploader: AdminPuzzleUploader,
-    private val adManager: AdManager
+    private val adManager: AdManager,
+    private val notificationManager: com.brainburst.domain.notifications.NotificationManager,
+    private val preferencesRepository: com.brainburst.domain.repository.PreferencesRepository
 ) {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -46,6 +53,53 @@ class HomeViewModel(
         observeAuthState()
         observeNavigation()
         loadGameStates()
+        checkNotificationPermission()
+    }
+    
+    private fun checkNotificationPermission() {
+        viewModelScope.launch {
+            // Check if we've already asked the user
+            val hasAsked = preferencesRepository.getHasAskedForNotificationPermission().first()
+            if (hasAsked) return@launch
+            
+            val hasPermission = notificationManager.hasNotificationPermission()
+            val notificationsEnabled = preferencesRepository.getNotificationsEnabled().first()
+            
+            // Show prompt if no permission and notifications not already enabled
+            if (!hasPermission && !notificationsEnabled) {
+                _uiState.value = _uiState.value.copy(
+                    showNotificationPrompt = true,
+                    hasCheckedNotificationPermission = true
+                )
+            }
+        }
+    }
+    
+    fun onNotificationPromptDismiss() {
+        viewModelScope.launch {
+            // Save that user declined so we don't ask again
+            preferencesRepository.setHasAskedForNotificationPermission(true)
+            _uiState.value = _uiState.value.copy(showNotificationPrompt = false)
+        }
+    }
+    
+    fun onNotificationPromptAccept() {
+        viewModelScope.launch {
+            // Save that user was asked
+            preferencesRepository.setHasAskedForNotificationPermission(true)
+            _uiState.value = _uiState.value.copy(showNotificationPrompt = false)
+            
+            // Request permission
+            notificationManager.requestNotificationPermission()
+            
+            // Check if permission was granted after a short delay
+            kotlinx.coroutines.delay(1000)
+            val hasPermission = notificationManager.hasNotificationPermission()
+            if (hasPermission) {
+                preferencesRepository.setNotificationsEnabled(true)
+                notificationManager.scheduleDailyNotifications()
+            }
+        }
     }
     
     private fun observeAuthState() {

@@ -47,13 +47,20 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val gradientBlue = Color(0xFF5B42F3)
     val backgroundColor = Color(0xFFF5F3FF)
 
-    // Permission state
+    // Permission state - removed dialog logic as settings open directly
     var showPermissionDialog by remember { mutableStateOf(false) }
-
-    // Check for permission result
-    LaunchedEffect(uiState.permissionDenied) {
-        if (uiState.permissionDenied) {
-            showPermissionDialog = true
+    
+    // Check permission status when screen appears and when app resumes
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.onScreenResumed()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
