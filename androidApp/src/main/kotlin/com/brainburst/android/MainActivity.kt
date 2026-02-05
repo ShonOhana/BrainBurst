@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.WindowCompat
 import com.brainburst.App
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
@@ -40,6 +43,13 @@ class MainActivity : ComponentActivity() {
         println("MainActivity: Activity module loaded into Koin")
         
         setContent {
+            // Set status bar icons to dark
+            SideEffect {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = true // Makes status bar icons dark
+                }
+            }
+            
             // Koin already initialized in Application, just use it
             App()
         }
