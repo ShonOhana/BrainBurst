@@ -48,19 +48,18 @@ actual class NotificationManager(
         // Schedule daily work at 8:00 AM UTC (when new puzzles are generated)
         val initialDelay = calculateInitialDelay()
         
+        println("NotificationManager: ============================================")
         println("NotificationManager: Scheduling notifications")
-        println("NotificationManager: Initial delay = ${initialDelay / 1000 / 60} minutes")
+        println("NotificationManager: Initial delay = ${initialDelay / 1000} seconds")
+        println("NotificationManager: Will fire at: ${System.currentTimeMillis() + initialDelay}")
+        println("NotificationManager: ============================================")
         
-        val constraints = androidx.work.Constraints.Builder()
-            .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
-            .build()
-        
+        // No constraints for testing - removing network requirement
         val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyNotificationWorker>(
             24, TimeUnit.HOURS
         ).setInitialDelay(
             initialDelay, TimeUnit.MILLISECONDS
-        ).setConstraints(constraints)
-        .build()
+        ).build()
         
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             WORK_NAME,
@@ -69,6 +68,7 @@ actual class NotificationManager(
         )
         
         println("NotificationManager: Notifications scheduled successfully")
+        println("NotificationManager: ============================================")
     }
     
     actual suspend fun cancelDailyNotifications() {
@@ -119,12 +119,18 @@ actual class NotificationManager(
      * Show a notification immediately (used by the worker)
      */
     fun showNotification(title: String, message: String) {
+        println("NotificationManager.showNotification: Called with title='$title'")
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
+            val hasPermission = ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            
+            println("NotificationManager.showNotification: Android 13+, permission granted = $hasPermission")
+            
+            if (!hasPermission) {
+                println("NotificationManager.showNotification: No permission, returning")
                 return
             }
         }
@@ -138,6 +144,8 @@ actual class NotificationManager(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
+        println("NotificationManager.showNotification: Building notification...")
+        
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.btn_star) // Using system icon as fallback
             .setContentTitle(title)
@@ -147,7 +155,9 @@ actual class NotificationManager(
             .setContentIntent(pendingIntent)
             .build()
         
+        println("NotificationManager.showNotification: Notifying with ID=$NOTIFICATION_ID")
         NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+        println("NotificationManager.showNotification: Notification posted successfully!")
     }
     
     private fun calculateInitialDelay(): Long {

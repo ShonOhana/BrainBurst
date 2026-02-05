@@ -5,13 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.brainburst.App
-import com.brainburst.di.getAllModules
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.analytics.logEvent
 import com.google.firebase.ktx.Firebase
+import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module
 
 class MainActivity : ComponentActivity() {
@@ -33,14 +32,16 @@ class MainActivity : ComponentActivity() {
             .build()
         MobileAds.setRequestConfiguration(testConfig)
         
-        // Create a module that provides this activity instance
-        val activityModule = module {
+        // Add activity module to existing Koin instance
+        loadKoinModules(module {
             single<ComponentActivity> { this@MainActivity }
-        }
+        })
+        
+        println("MainActivity: Activity module loaded into Koin")
         
         setContent {
-            // Combine platform modules with activity module
-            App(koinModules = getAllModules() + activityModule)
+            // Koin already initialized in Application, just use it
+            App()
         }
     }
 }

@@ -56,17 +56,39 @@ class HomeViewModel(
         checkNotificationPermission()
     }
     
+    /**
+     * Check permission status when user returns to home screen
+     * (e.g., after granting permission in phone settings from the popup)
+     */
+    fun onScreenResumed() {
+        viewModelScope.launch {
+            val hasPermission = notificationManager.hasNotificationPermission()
+            val notificationsEnabled = preferencesRepository.getNotificationsEnabled().first()
+            
+            // If user granted permission in settings, enable notifications
+            if (hasPermission && !notificationsEnabled) {
+                preferencesRepository.setNotificationsEnabled(true)
+                notificationManager.scheduleDailyNotifications()
+            }
+            // If user revoked permission in settings, disable notifications
+            else if (!hasPermission && notificationsEnabled) {
+                preferencesRepository.setNotificationsEnabled(false)
+                notificationManager.cancelDailyNotifications()
+            }
+        }
+    }
+    
     private fun checkNotificationPermission() {
         viewModelScope.launch {
             // Check if we've already asked the user
             val hasAsked = preferencesRepository.getHasAskedForNotificationPermission().first()
             if (hasAsked) return@launch
             
-            val hasPermission = notificationManager.hasNotificationPermission()
             val notificationsEnabled = preferencesRepository.getNotificationsEnabled().first()
             
-            // Show prompt if no permission and notifications not already enabled
-            if (!hasPermission && !notificationsEnabled) {
+            // Show prompt if notifications not enabled and user hasn't been asked
+            // Works on both Android 12 (auto-granted) and Android 13+ (requires permission)
+            if (!notificationsEnabled) {
                 _uiState.value = _uiState.value.copy(
                     showNotificationPrompt = true,
                     hasCheckedNotificationPermission = true
@@ -89,15 +111,17 @@ class HomeViewModel(
             preferencesRepository.setHasAskedForNotificationPermission(true)
             _uiState.value = _uiState.value.copy(showNotificationPrompt = false)
             
-            // Request permission
-            notificationManager.requestNotificationPermission()
-            
-            // Check if permission was granted after a short delay
-            kotlinx.coroutines.delay(1000)
+            // Check if we already have permission (Android 12 and below)
             val hasPermission = notificationManager.hasNotificationPermission()
+            
             if (hasPermission) {
+                // Android 12 and below - permission already granted, just enable notifications
                 preferencesRepository.setNotificationsEnabled(true)
                 notificationManager.scheduleDailyNotifications()
+            } else {
+                // Android 13+ - need to request permission first
+                // Open system settings, onScreenResumed() will detect when permission is granted
+                notificationManager.requestNotificationPermission()
             }
         }
     }

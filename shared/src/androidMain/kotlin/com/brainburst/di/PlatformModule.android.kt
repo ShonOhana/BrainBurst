@@ -10,21 +10,20 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 actual fun getPlatformModule(): Module = module {
-    // GoogleSignInProvider requires ComponentActivity
-    // This will be set from MainActivity
+    // NotificationManager uses Application Context (available early from Application class)
+    single { NotificationManager(get<Context>()) }
+    
+    // GoogleSignInProvider requires ComponentActivity (loaded later from MainActivity)
     single { GoogleSignInProvider(get<ComponentActivity>()) }
     
     // AdManager requires ComponentActivity
     single { AdManager(get<ComponentActivity>()) }
     
-    // NotificationManager requires Context
-    single { NotificationManager(get<ComponentActivity>() as Context) }
-    
-    // ShareManager requires Context
+    // ShareManager requires Context (can use Activity when available)
     single { ShareManager(get<ComponentActivity>() as Context) }
     
     // Provide Android Context for DataStore (as Any to match common signature)
-    single<Any> { get<ComponentActivity>() as Context }
+    single<Any> { get<Context>() }
 }
 
 

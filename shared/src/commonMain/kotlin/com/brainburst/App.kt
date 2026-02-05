@@ -36,14 +36,11 @@ import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 
 @Composable
-fun App(koinModules: List<org.koin.core.module.Module> = getAllModules()) {
-    KoinApplication(application = {
-        modules(koinModules)
-    }) {
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            BrainBurstTheme {
-                AppContent()
-            }
+fun App() {
+    // Koin is already initialized in Application, just use KoinContext
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        BrainBurstTheme {
+            AppContent()
         }
     }
 }

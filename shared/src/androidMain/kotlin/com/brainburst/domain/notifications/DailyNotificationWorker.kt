@@ -25,7 +25,6 @@ class DailyNotificationWorker(
     
     override suspend fun doWork(): Result {
         try {
-            println("DailyNotificationWorker: Starting work at ${System.currentTimeMillis()}")
             
             // Check if notifications are enabled
             val notificationsEnabled = preferencesRepository.getNotificationsEnabled().first()
@@ -46,28 +45,6 @@ class DailyNotificationWorker(
                 return Result.success()
             }
             
-            // Check if user has completed all today's puzzles
-            val hasUnsolvedPuzzle = GameType.entries.any { gameType ->
-                val hasCompleted = puzzleRepository.hasUserCompletedToday(
-                    userId = currentUser.uid,
-                    gameType = gameType
-                ).getOrNull() ?: false
-                
-                println("DailyNotificationWorker: $gameType completed = $hasCompleted")
-                
-                // Return true if this puzzle is NOT completed (i.e., unsolved)
-                !hasCompleted
-            }
-            
-            println("DailyNotificationWorker: Has unsolved puzzle = $hasUnsolvedPuzzle")
-            
-            // Only send notification if there's at least one unsolved puzzle
-            if (!hasUnsolvedPuzzle) {
-                // User has solved all puzzles, don't send notification
-                println("DailyNotificationWorker: All puzzles solved, skipping notification")
-                return Result.success()
-            }
-            
             // Show the notification
             println("DailyNotificationWorker: Showing notification")
             val notificationManager = NotificationManager(applicationContext)
@@ -76,11 +53,15 @@ class DailyNotificationWorker(
                 message = "Today's brain teaser is ready. Start solving now!"
             )
             
-            println("DailyNotificationWorker: Work completed successfully")
             return Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
-            println("DailyNotificationWorker: Error occurred - ${e.message}")
+            println("DailyNotificationWorker: ============================================")
+            println("DailyNotificationWorker: ERROR OCCURRED!")
+            println("DailyNotificationWorker: Error = ${e.message}")
+            println("DailyNotificationWorker: Stack trace:")
+            e.printStackTrace()
+            println("DailyNotificationWorker: ============================================")
             return Result.retry()
         }
     }
