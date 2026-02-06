@@ -25,6 +25,9 @@ class DailyNotificationWorker(
     
     override suspend fun doWork(): Result {
         try {
+            println("DailyNotificationWorker: ============================================")
+            println("DailyNotificationWorker: WORKER STARTED at ${System.currentTimeMillis()}")
+            println("DailyNotificationWorker: ============================================")
             
             // Check if notifications are enabled
             val notificationsEnabled = preferencesRepository.getNotificationsEnabled().first()
@@ -35,23 +38,17 @@ class DailyNotificationWorker(
                 return Result.success()
             }
             
-            // Check if user is logged in
-            val currentUser = authRepository.currentUser.value
-            println("DailyNotificationWorker: Current user = ${currentUser?.uid}")
-            
-            if (currentUser == null) {
-                // User not logged in, don't send notification
-                println("DailyNotificationWorker: No user logged in, skipping")
-                return Result.success()
-            }
-            
-            // Show the notification
+            // Show the notification (removed user login check - notifications work regardless)
             println("DailyNotificationWorker: Showing notification")
             val notificationManager = NotificationManager(applicationContext)
             notificationManager.showNotification(
-                title = "New Daily Puzzle! 🧩",
-                message = "Today's brain teaser is ready. Start solving now!"
+                title = "Your Daily Puzzle is Here! 🧩",
+                message = "Solve today before they're gone. You in?"
             )
+            
+            println("DailyNotificationWorker: ============================================")
+            println("DailyNotificationWorker: Notification sent successfully!")
+            println("DailyNotificationWorker: ============================================")
             
             return Result.success()
         } catch (e: Exception) {
