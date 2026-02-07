@@ -143,10 +143,14 @@ fun SudokuScreen(viewModel: SudokuViewModel, adManager: com.brainburst.domain.ad
                         .fillMaxSize()
                         .statusBarsPadding()
                         .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top
                 ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Top
+                    ) {
                     // Back button - more compact
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -298,13 +302,13 @@ fun SudokuScreen(viewModel: SudokuViewModel, adManager: com.brainburst.domain.ad
                         onHintClick = { viewModel.onHintPress() },
                         onSubmit = { viewModel.onSubmit() },
                         isComplete = uiState.isComplete,
-                        disabledNumbers = fullyPlacedNumbers,
+                            disabledNumbers = fullyPlacedNumbers,
                         isHintOnCooldown = uiState.isHintOnCooldown,
                         hintCooldownProgress = uiState.hintCooldownProgress
                     )
+                    }
                     
-                    // Banner ad at bottom
-                    Spacer(modifier = Modifier.height(8.dp))
+                    // Sticky Banner ad at bottom
                     BannerAdView(adManager = adManager)
                 }
             }

@@ -150,7 +150,7 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                 // Scrollable content
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .weight(1f)
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -388,10 +388,6 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                     // How to Play Section
                     HowToPlayZipSection()
                     
-                    // Banner ad at bottom
-                    Spacer(modifier = Modifier.height(8.dp))
-                    BannerAdView(adManager = adManager)
-                    
                     if (uiState.isSubmitting) {
                         Spacer(modifier = Modifier.height(16.dp))
                         CircularProgressIndicator()
@@ -399,6 +395,9 @@ fun ZipScreen(viewModel: ZipViewModel, adManager: com.brainburst.domain.ads.AdMa
                     
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+                
+                // Sticky Banner ad at bottom
+                BannerAdView(adManager = adManager)
             }
         }
         
