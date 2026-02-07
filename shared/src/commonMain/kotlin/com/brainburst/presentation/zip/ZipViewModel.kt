@@ -317,6 +317,11 @@ class ZipViewModel(
         val prevCell = state.path.getOrNull(state.path.size - 2)
         if (prevCell != null && position == prevCell) {
             removeLastCell()
+            // Clear hint after user makes a move
+            if (_uiState.value.hintType != HintType.None) {
+                clearHint()
+                startHintCooldown()
+            }
             return
         }
         
@@ -331,6 +336,12 @@ class ZipViewModel(
         newState = definition.updateDotProgress(newState, payloadData)
         
         currentState = newState
+
+        // Clear hint after user makes a move
+        if (_uiState.value.hintType != HintType.None) {
+            clearHint()
+            startHintCooldown()
+        }
 
         // Update UI
         updateUiFromState()
@@ -485,9 +496,7 @@ class ZipViewModel(
                                 hintPosition = hintAction.position,
                                 hintType = HintType.NextCell
                             )
-                            // Clear hint after 2.5 seconds
-                            delay(2500)
-                            clearHint()
+                            // Hint will remain until user makes a move
                         }
                         is HintAction.SuggestUndo -> {
                             println("ZIP HINT: Suggesting undo at ${hintAction.fromPosition}")
@@ -495,9 +504,7 @@ class ZipViewModel(
                                 hintPosition = hintAction.fromPosition,
                                 hintType = HintType.UndoSegment
                             )
-                            // Clear hint after 2.5 seconds
-                            delay(2500)
-                            clearHint()
+                            // Hint will remain until user makes a move
                         }
                         is HintAction.HighlightDot -> {
                             println("ZIP HINT: Highlighting dot ${hintAction.dotIndex}")
@@ -505,9 +512,7 @@ class ZipViewModel(
                                 hintPosition = payloadData.getDotPosition(hintAction.dotIndex),
                                 hintType = HintType.NextDot
                             )
-                            // Clear hint after 2.5 seconds
-                            delay(2500)
-                            clearHint()
+                            // Hint will remain until user makes a move
                         }
                         HintAction.NoHint -> {
                             println("ZIP HINT: No hint available")
@@ -517,8 +522,7 @@ class ZipViewModel(
                     
                     resumeTimer()
                     
-                    // Start hint cooldown
-                    startHintCooldown()
+                    // Cooldown will start after user makes a move
                 }
             }
         }
