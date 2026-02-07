@@ -216,19 +216,19 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Notifications
-            SettingsMenuItemWithSwitch(
-                icon = Icons.Default.Notifications,
-                iconColor = Color(0xFF9810FA),
-                title = "Notifications",
-                subtitle = "Enable push notifications",
-                checked = uiState.notificationsEnabled,
-                onCheckedChange = { enabled ->
-                    viewModel.onNotificationsToggle(enabled)
-                }
-            )
+//            Spacer(modifier = Modifier.height(12.dp))
+//
+//            // Notifications
+//            SettingsMenuItemWithSwitch(
+//                icon = Icons.Default.Notifications,
+//                iconColor = Color(0xFF9810FA),
+//                title = "Notifications",
+//                subtitle = "Enable push notifications",
+//                checked = uiState.notificationsEnabled,
+//                onCheckedChange = { enabled ->
+//                    viewModel.onNotificationsToggle(enabled)
+//                }
+//            )
 
             Spacer(modifier = Modifier.height(12.dp))
 

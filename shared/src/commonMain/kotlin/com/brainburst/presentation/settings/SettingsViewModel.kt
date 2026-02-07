@@ -96,7 +96,10 @@ class SettingsViewModel(
     private fun observeNotificationPreference() {
         viewModelScope.launch {
             preferencesRepository.getNotificationsEnabled().collect { enabled ->
-                _uiState.value = _uiState.value.copy(notificationsEnabled = enabled)
+                // Only show as enabled if BOTH user preference is enabled AND device has permission
+                val hasPermission = notificationManager.hasNotificationPermission()
+                val actuallyEnabled = enabled && hasPermission
+                _uiState.value = _uiState.value.copy(notificationsEnabled = actuallyEnabled)
             }
         }
     }
