@@ -75,6 +75,7 @@ class TangoViewModel(
     private var timerJob: Job? = null
     private var puzzleId: String? = null
     private var puzzleDate: String? = null
+    private var validationJob: Job? = null
 
     // Timer state
     private var elapsedMillisWhenPaused: Long = 0L
@@ -247,16 +248,25 @@ class TangoViewModel(
         val newState = definition.applyMove(state, move)
         currentState = newState
 
-        // Validate
-        validateCurrentState()
+        // Clear invalid positions temporarily to avoid red marks
+        _uiState.value = _uiState.value.copy(invalidPositions = emptyList())
+        
+        // Update UI immediately
         updateUiFromState()
         
         // Save state
         saveGameState()
 
-        // Check if completed
-        if (definition.isCompleted(newState, payload!!)) {
-            onPuzzleCompleted()
+        // Debounce validation by 2.5 seconds
+        validationJob?.cancel()
+        validationJob = viewModelScope.launch {
+            delay(2500)
+            validateCurrentState()
+            
+            // Check if completed
+            if (definition.isCompleted(newState, payload!!)) {
+                onPuzzleCompleted()
+            }
         }
     }
 
